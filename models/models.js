@@ -9,7 +9,7 @@ const Group_tag = sequelize.define('group_tag', {
 })
 
 //Творческие тэги
-const Creative_tag = sequelize.define('creative_tag', {
+const CreativeTag = sequelize.define('creativeTag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
 })
@@ -39,7 +39,6 @@ const Publication = sequelize.define('publication', {
   title: {type: DataTypes.STRING},
   content: {type: DataTypes.STRING},
   description: {type: DataTypes.STRING},
-  approve: {type: DataTypes.BOOLEAN},
   price: {type: DataTypes.INTEGER},
   date_of_delete: {type: DataTypes.DATE, defaultValue: null}
 })
@@ -78,12 +77,47 @@ const Comment = sequelize.define('comment', {
   text: {type: DataTypes.STRING}
 })
 
+const Publication_tag = sequelize.define('publication_tag', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Comment_likes = sequelize.define('comment_likes', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Attachment = sequelize.define('attachment', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Storage_publication = sequelize.define('storage_publication', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Author_tag = sequelize.define('author_tag', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const User_interest = sequelize.define('user_interest', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Publication_views = sequelize.define('publication_views', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Publication_buy = sequelize.define('publication_buy', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Publication_likes = sequelize.define('publication_likes', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
 //Relationships
 
-
 //Привязка к тэгу группу тэгов
-Group_tag.hasMany(Creative_tag)
-Creative_tag.belongsTo(Group_tag)
+Group_tag.hasMany(CreativeTag)
+CreativeTag.belongsTo(Group_tag)
 
 //Пользователь - Роль
 Role.hasMany(User)
@@ -111,10 +145,12 @@ Publication.belongsTo(Status_of_publication)
 Age_limit.hasMany(Publication)
 Publication.belongsTo(Age_limit)
 
-/* МНОГИЕ КО МНОГИМ
-  СОЗДАНИЕ ТАБЛИЦЫ ПУБЛИКАЦИЯ - ТЭГ */
-Publication.belongsToMany(Creative_tag, {through: 'tag_publication'})
-Creative_tag.belongsToMany(Publication, {through: 'tag_publication'})
+/* СОЗДАНИЕ ТАБЛИЦЫ ПУБЛИКАЦИЯ - ТЭГ */
+Publication.hasMany(Publication_tag)
+Publication_tag.belongsTo(Publication)
+
+CreativeTag.hasMany(Publication_tag)
+Publication_tag.belongsTo(CreativeTag)
 
 //Привязка типа файла к файлу
 Type_file.hasMany(File)
@@ -145,38 +181,76 @@ Comment.hasMany(Comment)
 Comment.belongsTo(Comment)
 
 //Лайки комментариев
-Comment.belongsToMany(User, {through: 'comment_likes'})
-User.belongsToMany(Comment, {through: 'comment_likes'})
+Comment.hasMany(Comment_likes)
+Comment_likes.belongsTo(Comment)
+
+User.hasMany(Comment_likes)
+Comment_likes.belongsTo(User)
 
 /* МНОГИЕ КО МНОГИМ
   СОЗДАНИЕ ТАБЛИЦЫ ВЛОЖЕНИЯ */
-Publication.belongsToMany(File, {through: 'attachment'})
-File.belongsToMany(Publication, {through: 'attachment'})
+
+File.hasMany(Attachment)
+Attachment.belongsTo(File)
+
+Publication.hasMany(Attachment)
+Attachment.belongsTo(Publication)
 
 //Хранение публикаций в папках
-Publication.belongsToMany(Folder_of_publication, {through: 'storage_publication'})
-Folder_of_publication.belongsToMany(Publication, {through: 'storage_publication'})
+Publication.hasMany(Storage_publication)
+Storage_publication.belongsTo(Publication)
+
+Folder_of_publication.hasMany(Storage_publication)
+Storage_publication.belongsTo(Folder_of_publication)
 
 // Темы, на которые пишет автор
-User.belongsToMany(Creative_tag, {through: 'author_tag'})
-Creative_tag.belongsToMany(User, {through: 'author_tag'})
+User.hasMany(Author_tag)
+Author_tag.belongsTo(User)
+
+CreativeTag.hasMany(Author_tag)
+Author_tag.belongsTo(CreativeTag)
 
 //Интересы пользователя
-User.belongsToMany(Creative_tag, {through: 'user_interest'})
-Creative_tag.belongsToMany(User, {through: 'user_interest'})
+CreativeTag.hasMany(User_interest)
+User_interest.belongsTo(CreativeTag)
+
+User.hasMany(User_interest)
+User_interest.belongsTo(User)
 
 //Просмотры публикаций
-User.belongsToMany(Publication, {through: 'publication_views'})
-Publication.belongsToMany(User, {through: 'publication_views'})
+Publication.hasMany(Publication_views)
+Publication_views.belongsTo(Publication)
+
+User.hasMany(Publication_views)
+Publication_views.belongsTo(User)
 
 //Покупки публикаций
-User.belongsToMany(Publication, {through: 'publication_buy'})
-Publication.belongsToMany(User, {through: 'publication_buy'})
+Publication.hasMany(Publication_buy)
+Publication_buy.belongsTo(Publication)
+
+User.hasMany(Publication_buy)
+Publication_buy.belongsTo(User)
 
 //Лайки публикаций
-User.belongsToMany(Publication, {through: 'publication_likes'})
-Publication.belongsToMany(User, {through: 'publication_likes'})
+Publication.hasMany(Publication_likes)
+Publication_likes.belongsTo(Publication)
+
+User.hasMany(Publication_likes)
+Publication_likes.belongsTo(User)
 
 module.exports = {
-  User, Role, Subscription, Publication, Creative_tag, Group_tag, Age_limit, Status_of_publication, Type_file, File
+  User,
+  Role,
+  Subscription,
+  Publication,
+  CreativeTag,
+  Group_tag,
+  Age_limit,
+  Status_of_publication,
+  Type_file,
+  File,
+  Publication_views,
+  Publication_buy,
+  Storage_publication,
+  Publication_likes, Author_tag, User_interest, Attachment, Comment_likes,
 }
