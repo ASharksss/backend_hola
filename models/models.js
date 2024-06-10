@@ -9,7 +9,7 @@ const Group_tag = sequelize.define('group_tag', {
 })
 
 //Творческие тэги
-const CreativeTag = sequelize.define('creativeTag', {
+const Creative_tag = sequelize.define('creative_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
 })
@@ -116,8 +116,8 @@ const Publication_likes = sequelize.define('publication_likes', {
 //Relationships
 
 //Привязка к тэгу группу тэгов
-Group_tag.hasMany(CreativeTag)
-CreativeTag.belongsTo(Group_tag)
+Group_tag.hasMany(Creative_tag)
+Creative_tag.belongsTo(Group_tag)
 
 //Пользователь - Роль
 Role.hasMany(User)
@@ -149,8 +149,8 @@ Publication.belongsTo(Age_limit)
 Publication.hasMany(Publication_tag)
 Publication_tag.belongsTo(Publication)
 
-CreativeTag.hasMany(Publication_tag)
-Publication_tag.belongsTo(CreativeTag)
+Creative_tag.hasMany(Publication_tag)
+Publication_tag.belongsTo(Creative_tag)
 
 //Привязка типа файла к файлу
 Type_file.hasMany(File)
@@ -207,12 +207,12 @@ Storage_publication.belongsTo(Folder_of_publication)
 User.hasMany(Author_tag)
 Author_tag.belongsTo(User)
 
-CreativeTag.hasMany(Author_tag)
-Author_tag.belongsTo(CreativeTag)
+Creative_tag.hasMany(Author_tag)
+Author_tag.belongsTo(Creative_tag)
 
 //Интересы пользователя
-CreativeTag.hasMany(User_interest)
-User_interest.belongsTo(CreativeTag)
+Creative_tag.hasMany(User_interest)
+User_interest.belongsTo(Creative_tag)
 
 User.hasMany(User_interest)
 User_interest.belongsTo(User)
@@ -243,7 +243,7 @@ module.exports = {
   Role,
   Subscription,
   Publication,
-  CreativeTag,
+  Creative_tag,
   Group_tag,
   Age_limit,
   Status_of_publication,
@@ -252,5 +252,5 @@ module.exports = {
   Publication_views,
   Publication_buy,
   Storage_publication,
-  Publication_likes, Author_tag, User_interest, Attachment, Comment_likes,
+  Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag
 }
