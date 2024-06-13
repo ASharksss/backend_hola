@@ -1,7 +1,15 @@
 const uuid = require('uuid')
 const path = require('path')
 const fs = require('fs')
-const {Publication, Publication_tag, Attachment, File, Comment, Comment_likes, Publication_likes} = require("../models/models");
+const {
+  Publication,
+  Publication_tag,
+  Attachment,
+  File,
+  Comment,
+  Comment_likes,
+  Publication_likes, Folder_of_publication, Folder_tag, Storage_publication
+} = require("../models/models");
 
 class PublicationController {
   async createPublication(req, res) {
@@ -53,6 +61,29 @@ class PublicationController {
 
   }
 
+  async createFolder(req, res) {
+    try {
+      const userId = req.userId
+      const {name, tags} = req.body
+      const folder = await Folder_of_publication.create({name, userId})
+      tags.map(async tag => {
+        await Folder_tag.create({creativeTagId: tag.id, folderOfPublicationId: folder.id})
+      })
+      return res.json(folder)
+    } catch (e) {
+      return res.json(e.message)
+    }
+  }
+
+  async putPublicationInFolder(req, res) {
+    try {
+      const {publicationId, folderOfPublicationId} = req.body
+      const storage = await Storage_publication.create({publicationId, folderOfPublicationId})
+      return res.json(storage)
+    } catch (e) {
+      return res.json(e.message)
+    }
+  }
 
 }
 

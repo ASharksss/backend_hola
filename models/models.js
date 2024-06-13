@@ -113,6 +113,10 @@ const Publication_likes = sequelize.define('publication_likes', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
 
+const Folder_tag = sequelize.define('folder_tag', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
 //Relationships
 
 //Привязка к тэгу группу тэгов
@@ -159,10 +163,6 @@ File.belongsTo(Type_file)
 //Привязка пользователя к файлу
 User.hasMany(File)
 File.belongsTo(User)
-
-//Привязка публикации к папке
-Publication.hasMany(Folder_of_publication)
-Folder_of_publication.belongsTo(Publication)
 
 //Привязка пользователя к папке
 User.hasMany(Folder_of_publication)
@@ -238,6 +238,13 @@ Publication_likes.belongsTo(Publication)
 User.hasMany(Publication_likes)
 Publication_likes.belongsTo(User)
 
+//Привязка тжгов к папкам
+Creative_tag.hasMany(Folder_tag)
+Folder_tag.belongsTo(Creative_tag)
+
+Folder_of_publication.hasMany(Folder_tag)
+Folder_tag.belongsTo(Folder_of_publication)
+
 module.exports = {
   User,
   Role,
@@ -250,7 +257,7 @@ module.exports = {
   Type_file,
   File,
   Publication_views,
-  Publication_buy,
-  Storage_publication, Comment,
+  Publication_buy,Folder_tag,
+  Storage_publication, Comment, Folder_of_publication,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag
 }

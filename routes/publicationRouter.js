@@ -5,6 +5,8 @@ const {isAuthorized} = require("../middleware/authMiddleware");
 
 router.post('/createPublication', isAuthorized, publicationController.createPublication)
 router.post('/likePublication', isAuthorized, publicationController.likePublication)
+router.post('/createFolder', isAuthorized, publicationController.createFolder)
+router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)
 
 
 module.exports = router
