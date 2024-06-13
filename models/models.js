@@ -251,6 +251,6 @@ module.exports = {
   File,
   Publication_views,
   Publication_buy,
-  Storage_publication,
+  Storage_publication, Comment,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag
 }
