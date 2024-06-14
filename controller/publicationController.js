@@ -6,9 +6,8 @@ const {
   Publication_tag,
   Attachment,
   File,
-  Comment,
-  Comment_likes,
-  Publication_likes, Folder_of_publication, Folder_tag, Storage_publication
+  Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
+  Age_limit
 } = require("../models/models");
 
 class PublicationController {
@@ -58,7 +57,66 @@ class PublicationController {
   }
 
   async getMainPublications(req, res) {
+    try {
+      const userId = req.userId
+      /*
+      group принимает:
+      main(без фильтров, по интересам), subscriptions(подписки), likes(понравившееся),
+      discussed(комменты), available (покупки)
+      */
+      const {group = 'main', tag} = req.query
+      let publications
+      let publicationsArray
+      let tags = []
+      let publicationTags
+      switch (group) {
+        case 'main':
+          publications = 'main'
+          break;
+        case 'subscriptions':
+          publications = 'subscriptions'
+          break;
+        case 'likes':
+          //Нахожу лайкнутые пользователем публикации
+          publicationsArray = await Publication_likes.findAll({
+            where: {userId},
+            attributes: ['publicationId', 'userId'],
+            include:  {
+              model: Publication,
+              attributes: ['id','title', 'description', 'price', 'date_of_delete', 'createdAt', ],
+              include: [
+                {model: User, attributes: ['id', 'nickname', ]},
+                {model: Age_limit, attributes: ['name']}
+              ]
+            },
+          })
 
+          //Нахожу тэги, привязанные к этим публикациям
+          for (const item of publicationsArray) {
+            const publicationTags = await Publication_tag.findAll({
+              where: {publicationId: item.publication.id},
+              attributes: ['publicationId', 'creativeTagId'],
+              include: [
+                {model: Creative_tag, attributes: ['name']},
+
+              ]
+            });
+            tags.push(...publicationTags);
+          }
+
+
+          break;
+        case 'discussed':
+          publications = 'discussed'
+          break;
+        case 'available':
+          publications = 'available'
+          break;
+      }
+      return res.json(tags)
+    } catch (e) {
+      return res.json(e.message)
+    }
   }
 
   async createFolder(req, res) {
@@ -80,6 +138,21 @@ class PublicationController {
       const {publicationId, folderOfPublicationId} = req.body
       const storage = await Storage_publication.create({publicationId, folderOfPublicationId})
       return res.json(storage)
+    } catch (e) {
+      return res.json(e.message)
+    }
+  }
+
+  async buyPublication(req, res) {
+    try {
+      const userId = req.userId
+      const {publicationId} = req.body
+      const candidate = await Publication_buy.findOne({where: {publicationId, userId}})
+      if (candidate) {
+        return res.json('Уже куплено')
+      }
+      const buy = await Publication_buy.create({publicationId, userId})
+      return res.json(buy)
     } catch (e) {
       return res.json(e.message)
     }
