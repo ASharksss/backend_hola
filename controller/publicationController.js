@@ -64,34 +64,33 @@ class PublicationController {
       main(без фильтров, по интересам), subscriptions(подписки), likes(понравившееся),
       discussed(комменты), available (покупки)
       */
-      const {group = 'main', tag} = req.query
-      let publications
+      const {group = 'main', creative_tags} = req.query
+      let publications = []
       let publicationsArray
       let tags = []
-      let publicationTags
       switch (group) {
         case 'main':
-          publications = 'main'
+
           break;
         case 'subscriptions':
-          publications = 'subscriptions'
+
           break;
         case 'likes':
-          //Нахожу лайкнутые пользователем публикации
+          //Вызов лайкнутых пользователем публикации
           publicationsArray = await Publication_likes.findAll({
             where: {userId},
             attributes: ['publicationId', 'userId'],
-            include:  {
+            include: {
               model: Publication,
-              attributes: ['id','title', 'description', 'price', 'date_of_delete', 'createdAt', ],
+              attributes: ['id', 'title', 'description', 'price', 'date_of_delete', 'createdAt',],
               include: [
-                {model: User, attributes: ['id', 'nickname', ]},
+                {model: User, attributes: ['id', 'nickname',]},
                 {model: Age_limit, attributes: ['name']}
               ]
             },
           })
 
-          //Нахожу тэги, привязанные к этим публикациям
+          //Вызов тэгов, привязанных к публикациям
           for (const item of publicationsArray) {
             const publicationTags = await Publication_tag.findAll({
               where: {publicationId: item.publication.id},
@@ -104,16 +103,29 @@ class PublicationController {
             tags.push(...publicationTags);
           }
 
-
+          //Фильтрация по тэгам
+          if (creative_tags) {
+            for (let i = 0; i < creative_tags.length; i++) { // перебор выбранных тэгов
+              tags.map(item => { // перебор тэгов найденных по публикациям
+                if (item.creativeTagId === parseInt(creative_tags[i])) { // если есть совпадения
+                  publicationsArray.map(publication => { // добавление в общий массив
+                    if (publication.publicationId === item.publicationId) {
+                      publications.push(publication)
+                    }
+                  })
+                }
+              })
+            }
+            const uniqueNames = new Set(publications)
+            publications = Array.from(uniqueNames)
+          }
           break;
         case 'discussed':
-          publications = 'discussed'
           break;
         case 'available':
-          publications = 'available'
           break;
       }
-      return res.json(tags)
+      return res.json(publications)
     } catch (e) {
       return res.json(e.message)
     }
