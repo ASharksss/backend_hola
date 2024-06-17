@@ -9,6 +9,7 @@ const {
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
   Age_limit, Role, Status_of_publication
 } = require("../models/models");
+const {count} = require('../utils')
 
 class PublicationController {
   async createPublication(req, res) {
@@ -62,7 +63,7 @@ class PublicationController {
       /*
       group принимает:
       main(без фильтров, по интересам), subscriptions(подписки), likes(понравившееся),
-      discussed(комменты), available (покупки)
+      discussed(комменты), available (покупки), popular ()
       */
       const {group = 'main', creative_tags} = req.query
       let publications = []
@@ -120,7 +121,41 @@ class PublicationController {
             publications = publicationsArray
           }
           break;
+        case 'popular':
+          //Получаем инфу о лайках
+          publicationsArray = await Publication_likes.findAll()
+          //Считаем количество лайков у каждого объявления
+          let likes = count(publicationsArray)
+          // Преобразуем объект в массив пар [key, value]
+          const entries = Object.entries(likes);
+          // Сортируем массив по значениям от большего к меньшему
+          const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
+          //Достаем ключи
+          const keys = sortedEntries.map(pair => pair[0])
+          //Находим по ключам объявления
+          for (const item of keys) {
+            let candidate = await Publication.findOne({
+              where: {id: item},
+              include: {model: Attachment, include: {model: File}}
+            })
+            if (creative_tags) {
+              for (let i = 0; i < creative_tags.length; i++) {
+                let addedTag = await Publication_tag.findAll({
+                  where: {publicationId: item, creativeTagId: creative_tags[i]},
+                  include: {model: Publication}
+                })
+               addedTag.map(t => {
+                 publications.push(candidate)
+               })
+              }
+            } else {
+              publications.push(candidate)
+            }
+          }
+
+          break;
         case 'discussed':
+
           break;
         case 'available':
           publicationsArray = await Publication_buy.findAll({
