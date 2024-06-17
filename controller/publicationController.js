@@ -7,7 +7,7 @@ const {
   Attachment,
   File,
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit
+  Age_limit, Role, Status_of_publication
 } = require("../models/models");
 
 class PublicationController {
@@ -116,13 +116,57 @@ class PublicationController {
             }
             const uniqueNames = new Set(publications)
             publications = Array.from(uniqueNames)
-          }else {
+          } else {
             publications = publicationsArray
           }
           break;
         case 'discussed':
           break;
         case 'available':
+          publicationsArray = await Publication_buy.findAll({
+            where: {userId},
+            include: {
+              model: Publication, include: [
+                {
+                  model: User,
+                  attributes: ['id', 'nickname', 'roleId'],
+                  include: [{model: Role, attributes: ['id', 'name']}]
+                },
+                {model: Age_limit, attributes: ['id', 'name']},
+                {model: Status_of_publication, attributes: ['name']},
+                {model: Attachment, include: {model: File}}
+              ]
+            }
+          })
+          if (creative_tags) {
+            for (const item of publicationsArray) {
+              const publicationTags = await Publication_tag.findAll({
+                where: {publicationId: item.publication.id},
+                attributes: ['publicationId', 'creativeTagId'],
+                include: [
+                  {model: Creative_tag, attributes: ['name']},
+                ]
+              });
+              tags.push(...publicationTags);
+
+              for (let i = 0; i < creative_tags.length; i++) { // перебор выбранных тэгов
+                tags.map(item => { // перебор тэгов найденных по публикациям
+                  if (item.creativeTagId === parseInt(creative_tags[i])) { // если есть совпадения
+                    publicationsArray.map(publication => { // добавление в общий массив
+                      if (publication.publicationId === item.publicationId) {
+                        publications.push(publication)
+                      }
+                    })
+                  }
+                })
+              }
+
+            }
+            const uniqueNames = new Set(publications)
+            publications = Array.from(uniqueNames)
+          } else {
+            publications = publicationsArray
+          }
           break;
       }
       return res.json(publications)
