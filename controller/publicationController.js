@@ -27,12 +27,12 @@ class PublicationController {
       //Загрузка файлов
       let fileArray = file.name !== undefined ? [file] : file // проверка на количество файлов
       fileArray.map(async item => {
-        console.log(item.name)
         let typeFile = item.name.split('.').pop() // записали расширение файла
         let fileName = uuid.v4() + `.${typeFile}` //создание уникального имени
         await item.mv(path.resolve(__dirname, '..', 'static', fileName))
         const file = await File.create({name: fileName, typeFileId, userId, approve: false,})
-        await Attachment.create({publicationId: publication.id, fileId: file.id})
+        const attachments = await Attachment.create({publicationId: publication.id, fileId: file.id})
+        console.log(attachments)
       })
       return res.json('Добавлено')
     } catch (e) {
@@ -70,10 +70,8 @@ class PublicationController {
       let tags = []
       switch (group) {
         case 'main':
-
           break;
         case 'subscriptions':
-
           break;
         case 'likes':
           //Вызов лайкнутых пользователем публикации
@@ -85,7 +83,8 @@ class PublicationController {
               attributes: ['id', 'title', 'description', 'price', 'date_of_delete', 'createdAt',],
               include: [
                 {model: User, attributes: ['id', 'nickname',]},
-                {model: Age_limit, attributes: ['name']}
+                {model: Age_limit, attributes: ['name']},
+                {model: Attachment, include: {model: File}}
               ]
             },
           })
@@ -97,7 +96,6 @@ class PublicationController {
               attributes: ['publicationId', 'creativeTagId'],
               include: [
                 {model: Creative_tag, attributes: ['name']},
-
               ]
             });
             tags.push(...publicationTags);
@@ -118,6 +116,8 @@ class PublicationController {
             }
             const uniqueNames = new Set(publications)
             publications = Array.from(uniqueNames)
+          }else {
+            publications = publicationsArray
           }
           break;
         case 'discussed':
