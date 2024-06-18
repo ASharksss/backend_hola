@@ -7,9 +7,10 @@ const {
   Attachment,
   File,
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit, Role, Status_of_publication, Comment
+  Age_limit, Role, Status_of_publication, Comment, User_interest
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../utils')
+const {Op} = require("sequelize");
 
 class PublicationController {
   async createPublication(req, res) {
@@ -72,6 +73,36 @@ class PublicationController {
       let publicationIds
       switch (group) {
         case 'main':
+          // Находим все creativeTagIds, которые интересуют пользователя
+          const userInterests = await User_interest.findAll({
+            where: { userId: userId },
+            attributes: ['creativeTagId']
+          });
+
+          const userCreativeTagIds = userInterests.map(interest => interest.creativeTagId);
+
+          if (userCreativeTagIds.length === 0) {
+            return []; // Если у пользователя нет интересов, возвращаем пустой массив
+          }
+
+          // Преобразование тегов из запроса в числа
+          const queryTags = Array.isArray(creative_tags) ? creative_tags.map(tag => parseInt(tag, 10)) : [parseInt(creative_tags, 10)];
+
+          // Определяем финальный список creativeTagIds для фильтрации публикаций
+          const filterCreativeTagIds = queryTags.length > 0 ? queryTags : userCreativeTagIds;
+
+          // Находим все публикации, которые имеют указанные creativeTagIds
+          publications = await Publication.findAll({
+            include: [{
+              model: Publication_tag,
+              where: {
+                creativeTagId: {
+                  [Op.in]: filterCreativeTagIds
+                }
+              },
+              attributes: []
+            }]
+          });
           break;
         case 'subscriptions':
           break;
