@@ -7,9 +7,9 @@ const {
   Attachment,
   File,
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit, Role, Status_of_publication
+  Age_limit, Role, Status_of_publication, Comment
 } = require("../models/models");
-const {count} = require('../utils')
+const {count, findPublicationTags, checkTags} = require('../utils')
 
 class PublicationController {
   async createPublication(req, res) {
@@ -63,12 +63,13 @@ class PublicationController {
       /*
       group принимает:
       main(без фильтров, по интересам), subscriptions(подписки), likes(понравившееся),
-      discussed(комменты), available (покупки), popular ()
+      discussed(комменты), available (покупки), popular (популярное)
       */
       const {group = 'main', creative_tags} = req.query
       let publications = []
       let publicationsArray
       let tags = []
+      let publicationIds
       switch (group) {
         case 'main':
           break;
@@ -91,32 +92,10 @@ class PublicationController {
           })
 
           //Вызов тэгов, привязанных к публикациям
-          for (const item of publicationsArray) {
-            const publicationTags = await Publication_tag.findAll({
-              where: {publicationId: item.publication.id},
-              attributes: ['publicationId', 'creativeTagId'],
-              include: [
-                {model: Creative_tag, attributes: ['name']},
-              ]
-            });
-            tags.push(...publicationTags);
-          }
-
+          await findPublicationTags(publicationsArray, tags)
           //Фильтрация по тэгам
           if (creative_tags) {
-            for (let i = 0; i < creative_tags.length; i++) { // перебор выбранных тэгов
-              tags.map(item => { // перебор тэгов найденных по публикациям
-                if (item.creativeTagId === parseInt(creative_tags[i])) { // если есть совпадения
-                  publicationsArray.map(publication => { // добавление в общий массив
-                    if (publication.publicationId === item.publicationId) {
-                      publications.push(publication)
-                    }
-                  })
-                }
-              })
-            }
-            const uniqueNames = new Set(publications)
-            publications = Array.from(uniqueNames)
+            checkTags(creative_tags, tags, publications, publicationsArray)
           } else {
             publications = publicationsArray
           }
@@ -141,12 +120,11 @@ class PublicationController {
             if (creative_tags) {
               for (let i = 0; i < creative_tags.length; i++) {
                 let addedTag = await Publication_tag.findAll({
-                  where: {publicationId: item, creativeTagId: creative_tags[i]},
-                  include: {model: Publication}
+                  where: {publicationId: item, creativeTagId: creative_tags[i]}
                 })
-               addedTag.map(t => {
-                 publications.push(candidate)
-               })
+                addedTag.map(t => {
+                  publications.push(candidate)
+                })
               }
             } else {
               publications.push(candidate)
@@ -155,6 +133,56 @@ class PublicationController {
 
           break;
         case 'discussed':
+          publicationsArray = await Comment.findAll({
+            include: {model: Publication}
+          })
+          publicationIds = publicationsArray.map(item => item.publicationId);
+
+          // Подсчитываем количество повторений каждого значения
+          const countMap = publicationIds.reduce((acc, id) => {
+            acc[id] = (acc[id] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Преобразуем объект в массив пар [ключ, значение]
+          const sortedCountArray = Object.entries(countMap)
+            .sort((a, b) => b[1] - a[1]); // Сортируем по значению в порядке убывания
+
+          // Извлекаем ключи из отсортированного массива
+          const sortedKeys = sortedCountArray.map(item => item[0]);
+
+          //Если есть тэги
+          if (creative_tags) {
+            for (let i = 0; i < creative_tags.length; i++) {//Перебираем массив тэгов
+              for (const item of sortedKeys) {
+                //Находим по тэгам объявления
+                let tag = await Publication_tag.findOne({
+                  where: {
+                    publicationId: item,
+                    creativeTagId: parseInt(creative_tags[i])
+                  }
+                })
+                //Если нашли добавляем пост в общий массив
+                if (tag) {
+                  const post = await Publication.findOne({where: {id: tag.publicationId}})
+                  if (post) {
+                    publications.push(post)
+                  }
+                }
+              }
+            }
+            //Убираем дубликаты
+            publications = Array.from(new Set(publications.map(p => p.id)))
+              .map(id => {
+                return publications.find(p => p.id === id);
+              });
+
+          } else {
+            for (const item of sortedKeys) {
+              const candidate = await Publication.findOne({where: {id: item}});
+              publications.push(candidate);
+            }
+          }
 
           break;
         case 'available':
