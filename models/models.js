@@ -26,6 +26,8 @@ const User = sequelize.define('user', {
   nickname: {type: DataTypes.STRING},
   date_of_birth: {type: DataTypes.DATE},
   sex: {type: DataTypes.STRING},
+  password: {type: DataTypes.STRING},
+  email: {type: DataTypes.STRING},
 })
 
 //Подписки
@@ -257,7 +259,7 @@ module.exports = {
   Type_file,
   File,
   Publication_views,
-  Publication_buy,Folder_tag,
+  Publication_buy, Folder_tag,
   Storage_publication, Comment, Folder_of_publication,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag
 }

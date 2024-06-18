@@ -61,7 +61,7 @@ class PublicationController {
   async getMainPublications(req, res) {
     try {
       const userId = req.userId
-      /* vbvbcvbcv
+      /*
       group принимает:
       main(без фильтров, по интересам), subscriptions(подписки), likes(понравившееся),
       discussed(комменты), available (покупки), popular (популярное)
@@ -82,7 +82,7 @@ class PublicationController {
           const userCreativeTagIds = userInterests.map(interest => interest.creativeTagId);
 
           if (userCreativeTagIds.length === 0) {
-            return []; // Если у пользователя нет интересов, возвращаем пустой массив
+            break; // Если у пользователя нет интересов, возвращаем пустой массив
           }
 
           // Преобразование тегов из запроса в числа
@@ -265,6 +265,7 @@ class PublicationController {
       }
       return res.json(publications)
     } catch (e) {
+      console.log(e)
       return res.json(e.message)
     }
   }

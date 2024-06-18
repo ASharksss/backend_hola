@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
 const router = require("./routes");
 const sequelize = require("./db");
@@ -10,6 +11,7 @@ const port = process.env.PORT
 
 app.use('/static', express.static('public'))
 app.use(cors())
+app.use(cookieParser())
 app.use(fileUpload({}))
 app.use(express.json())
 app.use('/api', router)
