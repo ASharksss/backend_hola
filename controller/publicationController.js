@@ -61,7 +61,7 @@ class PublicationController {
   async getMainPublications(req, res) {
     try {
       const userId = req.userId
-      /*
+      /* vbvbcvbcv
       group принимает:
       main(без фильтров, по интересам), subscriptions(подписки), likes(понравившееся),
       discussed(комменты), available (покупки), popular (популярное)
