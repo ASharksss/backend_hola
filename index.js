@@ -7,6 +7,7 @@ const fileUpload = require('express-fileupload')
 const router = require("./routes");
 const sequelize = require("./db");
 const models = require('./models/models')
+const deleteExpiredPublications = require("./services/deleteExpiredPublications");
 const port = process.env.PORT
 
 app.use('/static', express.static('public'))
@@ -33,3 +34,4 @@ const start = async () => {
 
 start();
 
+deleteExpiredPublications();

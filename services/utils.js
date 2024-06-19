@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const {Publication_tag, Creative_tag} = require("./models/models");
+const {Publication_tag, Creative_tag} = require("../models/models");
 
 function count(arr) {
   return arr.reduce((acc, item) => {
@@ -44,7 +44,7 @@ const generateTokens = async (user) => {
     const accessToken = jwt.sign(
       {user},
       process.env.JWT_SECRET,
-      {expiresIn: "1h"}
+      {expiresIn: "24h"}
     );
     const refreshToken = jwt.sign(
       {user},

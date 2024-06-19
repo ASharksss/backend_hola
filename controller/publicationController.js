@@ -9,20 +9,22 @@ const {
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
   Age_limit, Role, Status_of_publication, Comment, User_interest
 } = require("../models/models");
-const {count, findPublicationTags, checkTags} = require('../utils')
+const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op} = require("sequelize");
 
 class PublicationController {
   async createPublication(req, res) {
     try {
       const userId = req.userId
+      const role = req.user.roleId
       const {title, content, description, price, ageLimitId, tags, typeFileId} = req.body
       const {file} = req.files
+      if (role !== 2) return res.json('Создайте авторскую учетку')
       //Создание публикации
       const publication = await Publication.create({
         title, content, description, price, ageLimitId, userId, statusOfPublicationId: 1
       })
-      //Запист тэгов публикации
+      //Запись тэгов публикации
       JSON.parse(tags).map(async tag => {
         await Publication_tag.create({creativeTagId: tag.id, publicationId: publication.id})
       })
@@ -34,12 +36,33 @@ class PublicationController {
         await item.mv(path.resolve(__dirname, '..', 'static', fileName))
         const file = await File.create({name: fileName, typeFileId, userId, approve: false,})
         const attachments = await Attachment.create({publicationId: publication.id, fileId: file.id})
-        console.log(attachments)
       })
       return res.json('Добавлено')
     } catch (e) {
       console.log(e.message)
     }
+  }
+
+  async deletePublication(req, res) {
+    try {
+      const userId = req.userId
+      const {publicationId} = req.body
+      const today = new Date()
+      const publication = await Publication.findByPk(publicationId)
+      if (publication.userId === userId) {
+        await Publication.update({
+            date_of_delete: today
+          },
+          {
+            where: {id: publicationId}
+          }
+        )
+      }
+      return res.json(publication)
+    } catch (e) {
+      return res.json(e.message)
+    }
+
   }
 
   async likePublication(req, res) {
@@ -75,7 +98,7 @@ class PublicationController {
         case 'main':
           // Находим все creativeTagIds, которые интересуют пользователя
           const userInterests = await User_interest.findAll({
-            where: { userId: userId },
+            where: {userId: userId},
             attributes: ['creativeTagId']
           });
 
