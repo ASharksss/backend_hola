@@ -6,6 +6,7 @@ module.exports.isAuthorized = function (req, res, next) {
     const {refreshToken} = req.cookies
     jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
       if(err) {
+        console.log(err)
         return res.status(403).json({message: 'Ощибка доступа'})
       }
       req.userId = user.user.id
@@ -20,6 +21,7 @@ module.exports.isAuthorized = function (req, res, next) {
   if (bearer !== "Bearer" || !token) {
     return res.status(401).json({message: 'Пользрватель не авторизован, неправильный формат'})
   }
+  console.log(bearer, token)
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if(err) {
       return res.status(403).json({message: 'Ошибка доступа'})

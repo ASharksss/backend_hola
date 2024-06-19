@@ -98,7 +98,7 @@ class AuthController {
       const cookie = req.cookies
       const authToken = cookie.refreshToken;
       if (!authToken) {
-        return res.status(401).json({message: 'Пользрватель не авторизован, отсутствует токен'})
+        return res.status(401).json({message: 'Пользователь не авторизован, отсутствует токен'})
       }
       jwt.verify(authToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
         if(err) {
