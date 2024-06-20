@@ -48,10 +48,12 @@ class PublicationController {
       const userId = req.userId
       const {publicationId} = req.body
       const today = new Date()
+      const newDateOfDelete = new Date(today);
+      newDateOfDelete.setDate(today.getDate() + 14);
       const publication = await Publication.findByPk(publicationId)
       if (publication.userId === userId) {
         await Publication.update({
-            date_of_delete: today
+            date_of_delete: newDateOfDelete
           },
           {
             where: {id: publicationId}
