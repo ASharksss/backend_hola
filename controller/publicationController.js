@@ -7,7 +7,7 @@ const {
   Attachment,
   File,
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit, Role, Status_of_publication, Comment, User_interest
+  Age_limit, Role, Status_of_publication, Comment, User_interest, Author_tag, Group_tag
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op} = require("sequelize");
@@ -19,7 +19,42 @@ class PublicationController {
       const role = req.user.roleId
       const {title, content, description, price, ageLimitId, tags, typeFileId} = req.body
       const {file} = req.files
-      if (role !== 2) return res.json('Создайте авторскую учетку')
+      const {groupTags, creativeTags} = req.body
+      //Перевоплощение обычной учетки в авторскую и запись тем публикаций
+      if (role !== 2) {
+        // Найти все записи в таблице Group_tags, соответствующие пришедшему массиву groupTags
+        const foundGroupTags = await Group_tag.findAll({
+          where: {
+            id: {
+              [Op.in]: JSON.parse(groupTags)
+            }
+          }
+        });
+
+        // Получить IDs найденных group tags
+        const groupTagsIds = foundGroupTags.map(tag => tag.id);
+        // Проверить, существуют ли входные creativeTags в базе данных
+        const foundCreativeTags = await Creative_tag.findAll({
+          where: {
+            id: {
+              [Op.in]: JSON.parse(creativeTags)
+            },
+            groupTagId: {
+              [Op.in]: groupTagsIds
+            }
+          }
+        });
+
+        // Создать записи в таблице Author_tags
+        const authorTagsData = foundCreativeTags.map(tag => ({
+          userId,
+          creativeTagId: tag.id
+        }));
+
+        // Записать данные в таблицу Author_tags
+        const result = await Author_tag.bulkCreate(authorTagsData);
+        await User.update({roleId: 2}, {where: {id: userId}})
+      }
       //Создание публикации
       const publication = await Publication.create({
         title, content, description, price, ageLimitId, userId, statusOfPublicationId: 1
