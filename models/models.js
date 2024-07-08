@@ -45,6 +45,12 @@ const Publication = sequelize.define('publication', {
   date_of_delete: {type: DataTypes.DATE, defaultValue: null}
 })
 
+const Publication_block = sequelize.define('publication_block', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  type: {type: DataTypes.STRING},
+  text: {type: DataTypes.STRING},
+})
+
 //Статусы публикаций
 const Status_of_publication = sequelize.define('status_of_publication', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
@@ -119,6 +125,8 @@ const Folder_tag = sequelize.define('folder_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
 
+
+
 //Relationships
 
 //Привязка к тэгу группу тэгов
@@ -157,6 +165,14 @@ Publication_tag.belongsTo(Publication)
 
 Creative_tag.hasMany(Publication_tag)
 Publication_tag.belongsTo(Creative_tag)
+
+//Привязка файла к блоку публикации
+File.hasMany(Publication_block)
+Publication_block.belongsTo(File)
+
+//Привязка публикации к блоку публикации
+Publication.hasMany(Publication_block)
+Publication_block.belongsTo(Publication)
 
 //Привязка типа файла к файлу
 Type_file.hasMany(File)
@@ -261,5 +277,5 @@ module.exports = {
   Publication_views,
   Publication_buy, Folder_tag,
   Storage_publication, Comment, Folder_of_publication,
-  Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag
+  Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }

@@ -1,4 +1,4 @@
-const uuid = require('uuid')
+const {v4: uuidv4} = require('uuid');
 const path = require('path')
 const fs = require('fs')
 const {
@@ -7,7 +7,7 @@ const {
   Attachment,
   File,
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit, Role, Status_of_publication, Comment, User_interest, Author_tag, Group_tag
+  Age_limit, Role, Status_of_publication, Comment, User_interest, Author_tag, Group_tag, Publication_block
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op} = require("sequelize");
@@ -15,66 +15,120 @@ const {Op} = require("sequelize");
 class PublicationController {
   async createPublication(req, res) {
     try {
-      const userId = req.userId
-      const role = req.user.roleId
-      const {title, content, description, price, ageLimitId, tags, typeFileId} = req.body
-      const {file} = req.files
-      const {groupTags, creativeTags} = req.body
-      //Перевоплощение обычной учетки в авторскую и запись тем публикаций
+      const userId = req.userId;
+      const role = req.user.roleId;
+      const {
+        title,
+        content,
+        description,
+        price,
+        ageLimitId,
+        tags,
+        typeFileId,
+        blocks,
+        groupTags,
+        creativeTags
+      } = req.body;
+      const files = req.files ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
       if (role !== 2) {
-        // Найти все записи в таблице Group_tags, соответствующие пришедшему массиву groupTags
         const foundGroupTags = await Group_tag.findAll({
           where: {
             id: {
-              [Op.in]: JSON.parse(groupTags)
-            }
-          }
+              [Op.in]: JSON.parse(groupTags),
+            },
+          },
         });
 
-        // Получить IDs найденных group tags
         const groupTagsIds = foundGroupTags.map(tag => tag.id);
-        // Проверить, существуют ли входные creativeTags в базе данных
+
         const foundCreativeTags = await Creative_tag.findAll({
           where: {
             id: {
-              [Op.in]: JSON.parse(creativeTags)
+              [Op.in]: JSON.parse(creativeTags),
             },
             groupTagId: {
-              [Op.in]: groupTagsIds
-            }
-          }
+              [Op.in]: groupTagsIds,
+            },
+          },
         });
 
-        // Создать записи в таблице Author_tags
         const authorTagsData = foundCreativeTags.map(tag => ({
           userId,
-          creativeTagId: tag.id
+          creativeTagId: tag.id,
         }));
 
-        // Записать данные в таблицу Author_tags
-        const result = await Author_tag.bulkCreate(authorTagsData);
-        await User.update({roleId: 2}, {where: {id: userId}})
+        await Author_tag.bulkCreate(authorTagsData);
+        await User.update({roleId: 2}, {where: {id: userId}});
       }
-      //Создание публикации
+
       const publication = await Publication.create({
-        title, content, description, price, ageLimitId, userId, statusOfPublicationId: 1
-      })
-      //Запись тэгов публикации
-      JSON.parse(tags).map(async tag => {
-        await Publication_tag.create({creativeTagId: tag.id, publicationId: publication.id})
-      })
-      //Загрузка файлов
-      let fileArray = file.name !== undefined ? [file] : file // проверка на количество файлов
-      fileArray.map(async item => {
-        let typeFile = item.name.split('.').pop() // записали расширение файла
-        let fileName = uuid.v4() + `.${typeFile}` //создание уникального имени
-        await item.mv(path.resolve(__dirname, '..', 'static', fileName))
-        const file = await File.create({name: fileName, typeFileId, userId, approve: false,})
-        const attachments = await Attachment.create({publicationId: publication.id, fileId: file.id})
-      })
-      return res.json('Добавлено')
+        title,
+        content,
+        description,
+        price,
+        ageLimitId,
+        userId,
+        statusOfPublicationId: 1,
+      });
+
+      const parsedTags = JSON.parse(tags);
+      for (const tag of parsedTags) {
+        await Publication_tag.create({creativeTagId: tag, publicationId: publication.id});
+      }
+
+      const blockArray = JSON.parse(blocks);
+      for (const block of blockArray) {
+        if (block.type === 'file') {
+          const item = files.find(file => file.name === block.content);
+          if (item) {
+            const typeFile = item.name.split('.').pop();
+            const fileName = `${uuidv4()}.${typeFile}`;
+
+            await item.mv(path.resolve(__dirname, '..', 'static', fileName));
+
+            const file = await File.create({
+              name: fileName,
+              typeFileId,
+              userId,
+              approve: false,
+            });
+
+            await Publication_block.create({
+              type: block.type,
+              text: null,
+              fileId: file.id,
+              publicationId: publication.id,
+            });
+
+            await Attachment.create({
+              publicationId: publication.id,
+              fileId: file.id,
+            });
+          } else {
+            console.log("Файл не найден для блока:", block.content); // Отладочное сообщение
+          }
+        } else if (block.type === 'text') {
+          await Publication_block.create({
+            type: block.type,
+            text: block.content,
+            fileId: null,
+            publicationId: publication.id,
+          });
+        }
+      }
+
+      return res.json('Добавлено');
     } catch (e) {
-      console.log(e.message)
+      console.error("Ошибка:", e.message); // Отладочное сообщение
+      return res.status(500).json({message: 'Internal server error'});
+    }
+  }
+
+  async getPublication(req, res) {
+    try {
+
+    } catch (e) {
+
     }
   }
 
