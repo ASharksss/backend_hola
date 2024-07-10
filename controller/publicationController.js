@@ -7,7 +7,8 @@ const {
   Attachment,
   File,
   Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit, Role, Status_of_publication, Comment, User_interest, Author_tag, Group_tag, Publication_block
+  Age_limit, Role, Status_of_publication, Comment, User_interest, Author_tag, Group_tag, Publication_block, Subscription,
+  Type_notification, Notification
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op} = require("sequelize");
@@ -18,15 +19,9 @@ class PublicationController {
       const userId = req.userId;
       const role = req.user.roleId;
       const {
-        title,
-        description,
-        price,
-        ageLimitId,
-        tags,
-        typeFileId,
-        blocks,
-        groupTags,
-        creativeTags
+        title, description, price,
+        ageLimitId, tags, typeFileId,
+        blocks, groupTags, creativeTags
       } = req.body;
       const files = req.files ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
       if (role !== 2) {
@@ -111,7 +106,21 @@ class PublicationController {
         }
       }
 
-      return res.json('Добавлено');
+      const subscribers = await Subscription.findAll({
+        where: {authorId: userId},
+      })
+      let subscribersIds = subscribers.map(item => item.userId)
+      const nickname = await User.findOne({where: {id: userId}, attributes: ['nickname']})
+      let notificationText
+      for (let i of subscribersIds) {
+        const textTemplate = await Type_notification.findOne({where: {id: 1}})
+
+        notificationText = textTemplate.text.replace('{nickname}', nickname.nickname).replace('{title}', publication.title)
+        await Notification.create({
+          userId: i, notification_text: notificationText, typeNotificationId: 1
+        })
+      }
+      return res.json(notificationText);
     } catch (e) {
       console.error("Ошибка:", e.message); // Отладочное сообщение
       return res.status(500).json({error: e.message});
@@ -237,15 +246,13 @@ class PublicationController {
 
           const userCreativeTagIds = userInterests.map(interest => interest.creativeTagId);
 
-          if (userCreativeTagIds.length === 0) {
-            break; // Если у пользователя нет интересов, возвращаем пустой массив
+          // Преобразование тегов из запроса в числа с проверкой на корректность
+          let filterCreativeTagIds = userCreativeTagIds;
+
+          if (creative_tags) {
+            const queryTags = Array.isArray(creative_tags) ? creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag)) : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
+            filterCreativeTagIds = queryTags.length > 0 ? queryTags : userCreativeTagIds;
           }
-
-          // Преобразование тегов из запроса в числа
-          const queryTags = Array.isArray(creative_tags) ? creative_tags.map(tag => parseInt(tag, 10)) : [parseInt(creative_tags, 10)];
-
-          // Определяем финальный список creativeTagIds для фильтрации публикаций
-          const filterCreativeTagIds = queryTags.length > 0 ? queryTags : userCreativeTagIds;
 
           // Находим все публикации, которые имеют указанные creativeTagIds
           publications = await Publication.findAll({
@@ -259,6 +266,7 @@ class PublicationController {
               attributes: []
             }]
           });
+
           break;
         case 'subscriptions':
           break;

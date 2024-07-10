@@ -96,6 +96,17 @@ const UsersSocialMedia = sequelize.define('usersSocialMedia', {
   text: {type: DataTypes.STRING}
 })
 
+const Notification = sequelize.define('notification', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  read: {type: DataTypes.BOOLEAN, defaultValue: false},
+  notification_text: {type: DataTypes.STRING}
+})
+
+const Type_notification = sequelize.define('type_notification', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  text: {type: DataTypes.STRING}
+})
+
 const Publication_tag = sequelize.define('publication_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
@@ -280,6 +291,14 @@ UsersSocialMedia.belongsTo(SocialMedia)
 User.hasMany(UsersSocialMedia)
 UsersSocialMedia.belongsTo(User)
 
+//Уведомления
+User.hasMany(Notification)
+Notification.belongsTo(User)
+
+Type_notification.hasMany(Notification)
+Notification.belongsTo(Type_notification)
+
+
 module.exports = {
   User,
   Role,
@@ -293,6 +312,6 @@ module.exports = {
   File,
   Publication_views,
   Publication_buy, Folder_tag,
-  Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia,
+  Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia, Notification, Type_notification,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }
