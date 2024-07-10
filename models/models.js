@@ -28,6 +28,7 @@ const User = sequelize.define('user', {
   sex: {type: DataTypes.STRING},
   password: {type: DataTypes.STRING},
   email: {type: DataTypes.STRING},
+  aboutMe: {type: DataTypes.STRING}
 })
 
 //Подписки
@@ -85,6 +86,16 @@ const Comment = sequelize.define('comment', {
   text: {type: DataTypes.STRING}
 })
 
+const SocialMedia = sequelize.define('socialMedia', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  name: {type: DataTypes.STRING}
+})
+
+const UsersSocialMedia = sequelize.define('usersSocialMedia', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  text: {type: DataTypes.STRING}
+})
+
 const Publication_tag = sequelize.define('publication_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
@@ -124,7 +135,6 @@ const Publication_likes = sequelize.define('publication_likes', {
 const Folder_tag = sequelize.define('folder_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
-
 
 
 //Relationships
@@ -263,6 +273,13 @@ Folder_tag.belongsTo(Creative_tag)
 Folder_of_publication.hasMany(Folder_tag)
 Folder_tag.belongsTo(Folder_of_publication)
 
+//Привязка социаьный сетей к пользователю
+SocialMedia.hasMany(UsersSocialMedia)
+UsersSocialMedia.belongsTo(SocialMedia)
+
+User.hasMany(UsersSocialMedia)
+UsersSocialMedia.belongsTo(User)
+
 module.exports = {
   User,
   Role,
@@ -276,6 +293,6 @@ module.exports = {
   File,
   Publication_views,
   Publication_buy, Folder_tag,
-  Storage_publication, Comment, Folder_of_publication,
+  Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }

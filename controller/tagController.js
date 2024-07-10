@@ -1,4 +1,5 @@
 const {Group_tag, Creative_tag} = require("../models/models");
+const {Op} = require("sequelize");
 
 class TagController {
   async createTagGroup(req, res) {
@@ -9,7 +10,7 @@ class TagController {
       })
       return res.json(groups)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -21,7 +22,32 @@ class TagController {
       })
       return res.json(tags)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getTagGroup(req, res) {
+    try {
+      const groups = await Group_tag.findAll()
+      return res.json(groups)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getCreativeTagByGroup(req, res) {
+    try {
+      const {groups} = req.body
+      const tags = await Creative_tag.findAll({
+        where: {
+          groupTagId: {
+            [Op.in] : groups
+          }
+        }
+      })
+      return res.json(tags)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
     }
   }
 

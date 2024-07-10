@@ -19,7 +19,6 @@ class PublicationController {
       const role = req.user.roleId;
       const {
         title,
-        content,
         description,
         price,
         ageLimitId,
@@ -63,7 +62,6 @@ class PublicationController {
 
       const publication = await Publication.create({
         title,
-        content,
         description,
         price,
         ageLimitId,
@@ -100,10 +98,6 @@ class PublicationController {
               publicationId: publication.id,
             });
 
-            await Attachment.create({
-              publicationId: publication.id,
-              fileId: file.id,
-            });
           } else {
             console.log("Файл не найден для блока:", block.content); // Отладочное сообщение
           }
@@ -120,15 +114,64 @@ class PublicationController {
       return res.json('Добавлено');
     } catch (e) {
       console.error("Ошибка:", e.message); // Отладочное сообщение
-      return res.status(500).json({message: 'Internal server error'});
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getUserPublications(req, res) {
+    try {
+      const {userId} = req.query
+      const publications = await Publication.findAll({
+        where: {userId}
+      })
+      return res.json(publications)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
     }
   }
 
   async getPublication(req, res) {
     try {
+      const {id} = req.query
+      const publication = await Publication.findOne({
+        where: {id},
+        include: [
+          {model: Publication_block, include: {model: File}}
+        ]
+      })
+      if (publication) {
+        // Преобразование данных для включения полного пути к файлам
+        const publicationData = publication.toJSON();
+        publicationData.publication_blocks = publicationData.publication_blocks.map(block => {
+          if (block.file) {
+            block.file.url = `/static/${block.file.name}`;
+          }
+          return block;
+        });
+
+        return res.json(publicationData);
+      } else {
+        return res.status(404).json({message: 'Запись не найдена'});
+      }
 
     } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
 
+  async getUserFolders(req, res) {
+    try {
+      const {userId} = req.query
+      const folders = await Folder_of_publication.findAll({
+        where: {userId}
+      })
+      if (folders.length > 0) {
+        return res.json(folders)
+      } else {
+        return res.json('У пользователя нет плейлистов')
+      }
+    } catch (e) {
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -151,9 +194,8 @@ class PublicationController {
       }
       return res.json(publication)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
-
   }
 
   async likePublication(req, res) {
@@ -168,7 +210,7 @@ class PublicationController {
       }
       return res.json("усе")
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -380,7 +422,7 @@ class PublicationController {
       return res.json(publications)
     } catch (e) {
       console.log(e)
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -394,7 +436,7 @@ class PublicationController {
       })
       return res.json(folder)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -404,7 +446,7 @@ class PublicationController {
       const storage = await Storage_publication.create({publicationId, folderOfPublicationId})
       return res.json(storage)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -419,7 +461,7 @@ class PublicationController {
       const buy = await Publication_buy.create({publicationId, userId})
       return res.json(buy)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 

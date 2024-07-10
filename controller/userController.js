@@ -1,4 +1,4 @@
-const {User_interest, Author_tag, Subscription} = require("../models/models");
+const {User_interest, Author_tag, Subscription, UsersSocialMedia, User} = require("../models/models");
 
 class UserController {
 
@@ -16,7 +16,17 @@ class UserController {
       }
       return res.json(candidate)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getSubscribers(req, res) {
+    try {
+      const {authorId} = req.query
+      const subscribers = await Subscription.findAll({where: {authorId}})
+      return res.json(subscribers)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -30,7 +40,7 @@ class UserController {
       })
       return res.json(tags)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
 
@@ -43,9 +53,39 @@ class UserController {
       })
       return res.json(tags)
     } catch (e) {
-      return res.json(e.message)
+      return res.status(500).json({error: e.message});
     }
   }
+
+  async createUsersSocialMedia(req, res) {
+    try {
+      const userId = req.userId
+      const {socialMedia} = req.body
+      for (let item of socialMedia) {
+        await UsersSocialMedia.create({socialMediumId: item.socialMediumId, text: item.text, userId})
+      }
+      return res.json('Добавлено')
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async createAboutMe(req, res) {
+    try {
+      const userId = req.userId
+      const {aboutMe} = req.body
+      const result = await User.update(
+        {aboutMe},
+        {where: {id: userId}}
+      )
+      if (result[0] === 0) {
+        return res.json('Запись не найдена или уже имеет такое значение')
+      }
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
 }
 
 module.exports = new UserController()

@@ -10,7 +10,7 @@ const models = require('./models/models')
 const deleteExpiredPublications = require("./services/deleteExpiredPublications");
 const port = process.env.PORT
 
-app.use('/static', express.static('public'))
+app.use('/static', express.static('static'))
 app.use(cors())
 app.use(cookieParser())
 app.use(fileUpload({}))
