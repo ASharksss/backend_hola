@@ -8,7 +8,6 @@ class AuthController {
   async registration(req, res) {
     try {
       const {username, sex, password, email, date_of_birth} = req.body
-      console.log(username, sex, password, email, date_of_birth)
       const hashPassword = await bcrypt.hash(password, 10)
       const [user, created] = await User.findOrCreate({
         where: {
@@ -18,7 +17,7 @@ class AuthController {
           nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
         }
       })
-      // Если захотите сделать отправку почты :*
+      // Если захотите сделать отправку почты
       // const mailOptions = {
       //   from: EMAIL_USER,
       //   to: email,

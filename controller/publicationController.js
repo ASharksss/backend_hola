@@ -6,9 +6,24 @@ const {
   Publication_tag,
   Attachment,
   File,
-  Publication_likes, Folder_of_publication, Folder_tag, Storage_publication, Creative_tag, Publication_buy, User,
-  Age_limit, Role, Status_of_publication, Comment, User_interest, Author_tag, Group_tag, Publication_block, Subscription,
-  Type_notification, Notification
+  Publication_likes,
+  Folder_of_publication,
+  Folder_tag,
+  Storage_publication,
+  Creative_tag,
+  Publication_buy,
+  User,
+  Age_limit,
+  Role,
+  Status_of_publication,
+  Comment,
+  User_interest,
+  Author_tag,
+  Group_tag,
+  Publication_block,
+  Subscription,
+  Type_notification,
+  Notification
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op} = require("sequelize");
@@ -192,6 +207,7 @@ class PublicationController {
   async deletePublication(req, res) {
     try {
       const userId = req.userId
+      const author = req.user
       const {publicationId} = req.body
       const today = new Date()
       const newDateOfDelete = new Date(today);
@@ -205,7 +221,17 @@ class PublicationController {
             where: {id: publicationId}
           }
         )
+
+        const subscribers = await Subscription.findAll({where: {authorId: userId}})
+        const subscribersIds = subscribers.map(item => item.userId)
+        let templateText = await Type_notification.findOne({where: {id: 6}})
+        for (let item of subscribersIds) {
+          let notification_text = templateText.text.replace('{nickname}', author.nickname).replace('{title}', publication.title)
+          await Notification.create({userId: item, notification_text, typeNotificationId: 6})
+        }
+
       }
+
       return res.json(publication)
     } catch (e) {
       return res.status(500).json({error: e.message});

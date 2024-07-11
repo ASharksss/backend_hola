@@ -1,15 +1,30 @@
-const {User_interest, Author_tag, Subscription, UsersSocialMedia, User} = require("../models/models");
+const {
+  User_interest,
+  Author_tag,
+  Subscription,
+  UsersSocialMedia,
+  User,
+  Type_notification, Notification
+} = require("../models/models");
 
 class UserController {
 
   async subscribe(req, res) {
     try {
       const userId = req.userId
+      const user = req.user
       const {authorId} = req.body
       const [candidate, created] = await Subscription.findOrCreate({
         where: {authorId, userId}
       })
       if (created) {
+        const textTemplate = await Type_notification.findOne({where: {id: 5}})
+        let notification_text = textTemplate.text.replace('{nickname}', user.nickname)
+        await Notification.create({
+          userId: authorId,
+          notification_text,
+          typeNotificationId: 5
+        })
         return res.json(candidate)
       } else {
         await Subscription.destroy({where: {userId, authorId}})
