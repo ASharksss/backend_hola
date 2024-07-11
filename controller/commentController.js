@@ -1,11 +1,24 @@
-const {Comment, Comment_likes} = require("../models/models");
+const {Comment, Comment_likes, Notification, Type_notification} = require("../models/models");
 
 class CommentController {
   async commentPublication(req, res) {
     try {
       const userId = req.userId
+      const user = req.user
       const {text, publicationId, commentId = null} = req.body
-      const comment = await Comment.create({userId, text, publicationId, commentId})
+      let comment
+      if (commentId) {
+        comment = await Comment.create({userId, text, publicationId, commentId})
+        // Находим получателя объявления
+        let recipient = await Comment.findOne({where: {id: commentId}, attributes: ['userId']})
+        //Шаблонный текст
+        let templateText = await Type_notification.findOne({where: {id: 4}})
+        let notification_text = templateText.text.replace('{nickname}', user.nickname)
+        await Notification.create({userId: recipient.userId, notification_text, typeNotificationId: 4})
+      } else {
+        comment = await Comment.create({userId, text, publicationId, commentId})
+      }
+
       return res.json(comment)
     } catch (e) {
       return res.json(e.message)
@@ -15,15 +28,23 @@ class CommentController {
   async commentLike(req, res) {
     try {
       const userId = req.userId
+      const user = req.user
       const {commentId} = req.body
+      let comment = await Comment.findOne({where: {id: commentId}})
       const like = await Comment_likes.findOne({where: {userId, commentId}})
-      let comment
+      let commentLike
+      let commentator
       if (like) {
         await Comment_likes.destroy({where: {commentId, userId}})
       } else {
-        comment = await Comment_likes.create({userId, commentId})
+        commentLike = await Comment_likes.create({userId, commentId})
+        let templateText = await Type_notification.findOne({where: {id: 3}})
+        let notification_text = templateText.text.replace('{nickname}', user.nickname)
+        await Notification.create(
+          {userId: comment.userId, notification_text: notification_text, typeNotificationId: 3}
+        )
       }
-      return res.json(comment)
+      return res.json(commentLike)
     } catch (e) {
       return res.json(e.message)
     }

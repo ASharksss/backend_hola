@@ -105,17 +105,22 @@ class PublicationController {
           });
         }
       }
-
+      //Получаем подписчиков автора
       const subscribers = await Subscription.findAll({
         where: {authorId: userId},
       })
+      //Получаем ids подписчиков
       let subscribersIds = subscribers.map(item => item.userId)
+      //Берем nickname автора
       const nickname = await User.findOne({where: {id: userId}, attributes: ['nickname']})
       let notificationText
+      //Перебираем подписчиков
       for (let i of subscribersIds) {
+        //Берем нужный шаблон для уведомления
         const textTemplate = await Type_notification.findOne({where: {id: 1}})
-
+        //Формируем текст уведомления
         notificationText = textTemplate.text.replace('{nickname}', nickname.nickname).replace('{title}', publication.title)
+
         await Notification.create({
           userId: i, notification_text: notificationText, typeNotificationId: 1
         })
@@ -269,6 +274,7 @@ class PublicationController {
 
           break;
         case 'subscriptions':
+
           break;
         case 'likes':
           //Вызов лайкнутых пользователем публикации
