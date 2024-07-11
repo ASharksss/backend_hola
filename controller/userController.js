@@ -101,6 +101,10 @@ class UserController {
     }
   }
 
+  async takeAvatar(req, res) {
+
+  }
+
 }
 
 module.exports = new UserController()

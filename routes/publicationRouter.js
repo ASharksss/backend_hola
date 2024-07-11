@@ -13,6 +13,7 @@ router.post('/createFolder', isAuthorized, publicationController.createFolder)
 router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)
 router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
 router.get('/getMainPublications', isAuthorized, publicationController.getMainPublications)
+router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket)
 
 
 module.exports = router

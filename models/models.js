@@ -43,7 +43,8 @@ const Publication = sequelize.define('publication', {
   content: {type: DataTypes.STRING},
   description: {type: DataTypes.STRING},
   price: {type: DataTypes.INTEGER},
-  date_of_delete: {type: DataTypes.DATE, defaultValue: null}
+  date_of_delete: {type: DataTypes.DATE, defaultValue: null},
+  views_count: {type: DataTypes.INTEGER, defaultValue: 0}
 })
 
 const Publication_block = sequelize.define('publication_block', {
@@ -107,6 +108,10 @@ const Type_notification = sequelize.define('type_notification', {
   text: {type: DataTypes.STRING}
 })
 
+const Basket = sequelize.define('basket', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+})
+
 const Publication_tag = sequelize.define('publication_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
@@ -149,6 +154,15 @@ const Folder_tag = sequelize.define('folder_tag', {
 
 
 //Relationships
+
+//Привязка пользователя к корзине
+User.hasMany(Basket)
+Basket.belongsTo(User)
+
+
+//Привязка публикации к корзине
+Publication.hasMany(Basket)
+Basket.belongsTo(Publication)
 
 //Привязка к тэгу группу тэгов
 Group_tag.hasMany(Creative_tag)
@@ -311,7 +325,7 @@ module.exports = {
   Type_file,
   File,
   Publication_views,
-  Publication_buy, Folder_tag,
+  Publication_buy, Folder_tag, Basket,
   Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia, Notification, Type_notification,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }

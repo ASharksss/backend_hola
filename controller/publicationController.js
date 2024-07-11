@@ -23,7 +23,7 @@ const {
   Publication_block,
   Subscription,
   Type_notification,
-  Notification
+  Notification, Basket, Publication_views
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op} = require("sequelize");
@@ -161,6 +161,7 @@ class PublicationController {
 
   async getPublication(req, res) {
     try {
+      const userId = req.userId
       const {id} = req.query
       const publication = await Publication.findOne({
         where: {id},
@@ -178,6 +179,14 @@ class PublicationController {
           return block;
         });
 
+        const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})
+        if (created) {
+          // Если запись была создана, увеличиваем views в таблице Publication
+          const publication = await Publication.findByPk(id)
+          if (publication) {
+            await publication.increment('views_count');
+          }
+        }
         return res.json(publicationData);
       } else {
         return res.status(404).json({message: 'Запись не найдена'});
@@ -490,16 +499,57 @@ class PublicationController {
     }
   }
 
-  async buyPublication(req, res) {
+  async putPublicationInBasket(req, res) {
     try {
       const userId = req.userId
       const {publicationId} = req.body
-      const candidate = await Publication_buy.findOne({where: {publicationId, userId}})
+      const candidate = await Publication_buy.findOne({where: {userId, publicationId}})
       if (candidate) {
-        return res.json('Уже куплено')
+        return res.json('Уже приобретено')
+      } else {
+        const [item, created] = await Basket.findOrCreate({where: {userId, publicationId}})
+        if (created) {
+          return res.json(item)
+        } else {
+          return res.json('Уже в коризне')
+        }
       }
-      const buy = await Publication_buy.create({publicationId, userId})
-      return res.json(buy)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async buyPublication(req, res) {
+    try {
+      const userId = req.userId;
+      const {publicationIds} = req.body;
+
+      if (!Array.isArray(publicationIds) || publicationIds.length === 0) {
+        return res.status(400).json({error: 'Не указан массив publicationIds или он пуст'});
+      }
+
+      const boughtPublications = [];
+      const failedPublications = [];
+
+      for (const publicationId of publicationIds) {
+        const candidate = await Publication_buy.findOne({where: {publicationId, userId}});
+
+        if (candidate) {
+          failedPublications.push(publicationId);
+        } else {
+          const buy = await Publication_buy.create({publicationId, userId});
+          boughtPublications.push(publicationId);
+        }
+      }
+
+      if (boughtPublications.length > 0) {
+        await Basket.destroy({where: {userId, publicationId: boughtPublications}});
+      }
+
+      return res.json({
+        bought: boughtPublications,
+        alreadyBought: failedPublications
+      })
     } catch (e) {
       return res.status(500).json({error: e.message});
     }
