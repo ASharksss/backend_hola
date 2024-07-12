@@ -303,9 +303,21 @@ class PublicationController {
                   [Op.in]: filterCreativeTagIds
                 }
               },
-              attributes: []
-            }]
+              attributes: [],
+            },
+              {model: Publication_block, include: {model: File}}
+            ],
           });
+
+          for (let publication of publications) {
+            if (publication.publication_blocks) { // Обратите внимание на правильный регистр: Publication_block -> Publication_blocks
+              publication.publication_blocks.forEach(block => {
+                if (block.type === 'file') {
+                  block.file.url = `/static/${block.file.name}`;
+                }
+              });
+            }
+          }
 
           break;
         case 'subscriptions':

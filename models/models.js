@@ -74,7 +74,8 @@ const Type_file = sequelize.define('type_file', {
 const File = sequelize.define('file', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
-  approve: {type: DataTypes.BOOLEAN}
+  approve: {type: DataTypes.BOOLEAN},
+  url: {type: DataTypes.STRING}
 })
 
 const Folder_of_publication = sequelize.define('folder_of_publication', {
