@@ -9,9 +9,13 @@ const sequelize = require("./db");
 const models = require('./models/models')
 const deleteExpiredPublications = require("./services/deleteExpiredPublications");
 const port = process.env.PORT
+const originAccess = process.env.originAccess || '["http://localhost:3000"]'
 
 app.use('/static', express.static('static'))
-app.use(cors())
+app.use(cors({
+  credentials: true, origin: JSON.parse(originAccess),
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-position'], methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE']
+}))
 app.use(cookieParser())
 app.use(fileUpload({}))
 app.use(express.json())
@@ -21,7 +25,7 @@ app.use('/api', router)
 const start = async () => {
   try {
     await sequelize.authenticate()
-    await sequelize.sync({alter: true}).then(result => {
+    await sequelize.sync().then(result => {
       console.log(result)
     }).catch(e => console.log(e))
     app.listen(port, () => {

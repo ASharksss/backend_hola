@@ -71,6 +71,7 @@ class PublicationController {
         await User.update({roleId: 2}, {where: {id: userId}});
       }
 
+      //Прикрепление обложки для публикации
       const coverTypeFile = cover.name.split('.').pop();
       console.log(`Тип файла: ${coverTypeFile}`)
       if (coverTypeFile !== 'jpeg' && coverTypeFile !== 'png' && coverTypeFile !== 'jpg') {
@@ -536,7 +537,6 @@ class PublicationController {
     }
   }
 
-
   async createFolder(req, res) {
     try {
       const userId = req.userId
@@ -581,7 +581,6 @@ class PublicationController {
     }
   }
 
-
   async buyPublication(req, res) {
     try {
       const userId = req.userId;
@@ -617,6 +616,8 @@ class PublicationController {
       return res.status(500).json({error: e.message});
     }
   }
+
+
 
 }
 
