@@ -109,6 +109,19 @@ const Type_notification = sequelize.define('type_notification', {
   text: {type: DataTypes.STRING}
 })
 
+const Wallet = sequelize.define('wallet', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  balance: {type: DataTypes.DOUBLE}
+})
+
+const Transaction = sequelize.define('transaction', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  purchaseCost: {type: DataTypes.DOUBLE},
+  commission: {type: DataTypes.DOUBLE},
+  transferToAuthor: {type: DataTypes.DOUBLE},
+  transferToService: {type: DataTypes.DOUBLE}
+})
+
 const Basket = sequelize.define('basket', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
 })
@@ -155,6 +168,17 @@ const Folder_tag = sequelize.define('folder_tag', {
 
 
 //Relationships
+//Привязка покупки к транзакции
+Publication_buy.hasMany(Transaction)
+Transaction.belongsTo(Publication_buy)
+
+//Привязка кошелька к транзакции
+Wallet.hasMany(Transaction)
+Transaction.belongsTo(Wallet)
+
+//Привязка пользователя к кошельку
+User.hasMany(Wallet)
+Wallet.belongsTo(User)
 
 //Привязка пользователя к корзине
 User.hasMany(Basket)
@@ -326,7 +350,7 @@ module.exports = {
   Type_file,
   File,
   Publication_views,
-  Publication_buy, Folder_tag, Basket,
+  Publication_buy, Folder_tag, Basket, Transaction, Wallet,
   Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia, Notification, Type_notification,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }

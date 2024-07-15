@@ -25,7 +25,7 @@ app.use('/api', router)
 const start = async () => {
   try {
     await sequelize.authenticate()
-    await sequelize.sync().then(result => {
+    await sequelize.sync({alter: true}).then(result => {
       console.log(result)
     }).catch(e => console.log(e))
     app.listen(port, () => {
