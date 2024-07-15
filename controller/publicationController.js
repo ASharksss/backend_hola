@@ -26,7 +26,7 @@ const {
   Notification, Basket, Publication_views
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
-const {Op} = require("sequelize");
+const {Op, Sequelize} = require("sequelize");
 
 class PublicationController {
   async createPublication(req, res) {
@@ -36,9 +36,10 @@ class PublicationController {
       const {
         title, description, price,
         ageLimitId, tags, typeFileId,
-        blocks, groupTags, creativeTags
+        blocks, groupTags, creativeTags,
       } = req.body;
-      const files = req.files ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
+      const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
+      const cover = req.files?.cover
       if (role !== 2) {
         const foundGroupTags = await Group_tag.findAll({
           where: {
@@ -70,6 +71,20 @@ class PublicationController {
         await User.update({roleId: 2}, {where: {id: userId}});
       }
 
+      const coverTypeFile = cover.name.split('.').pop();
+      console.log(`Тип файла: ${coverTypeFile}`)
+      if (coverTypeFile !== 'jpeg' && coverTypeFile !== 'png' && coverTypeFile !== 'jpg') {
+        return res.json('Неподходящее расширение файла для обложки');
+      }
+      const coverName = `${uuidv4()}.${coverTypeFile}`;
+      await cover.mv(path.resolve(__dirname, '..', 'static', coverName));
+      await File.create({
+        name: coverName,
+        typeFileId: 4,
+        userId,
+        approve: false,
+      })
+
       const publication = await Publication.create({
         title,
         description,
@@ -77,6 +92,7 @@ class PublicationController {
         ageLimitId,
         userId,
         statusOfPublicationId: 1,
+        coverUrl: `/static/${coverName}`
       });
 
       const parsedTags = JSON.parse(tags);
@@ -159,110 +175,6 @@ class PublicationController {
     }
   }
 
-  async getPublication(req, res) {
-    try {
-      const userId = req.userId
-      const {id} = req.query
-      const publication = await Publication.findOne({
-        where: {id},
-        include: [
-          {model: Publication_block, include: {model: File}}
-        ]
-      })
-      if (publication) {
-        // Преобразование данных для включения полного пути к файлам
-        const publicationData = publication.toJSON();
-        publicationData.publication_blocks = publicationData.publication_blocks.map(block => {
-          if (block.file) {
-            block.file.url = `/static/${block.file.name}`;
-          }
-          return block;
-        });
-
-        const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})
-        if (created) {
-          // Если запись была создана, увеличиваем views в таблице Publication
-          const publication = await Publication.findByPk(id)
-          if (publication) {
-            await publication.increment('views_count');
-          }
-        }
-        return res.json(publicationData);
-      } else {
-        return res.status(404).json({message: 'Запись не найдена'});
-      }
-
-    } catch (e) {
-      return res.status(500).json({error: e.message});
-    }
-  }
-
-  async getUserFolders(req, res) {
-    try {
-      const {userId} = req.query
-      const folders = await Folder_of_publication.findAll({
-        where: {userId}
-      })
-      if (folders.length > 0) {
-        return res.json(folders)
-      } else {
-        return res.json('У пользователя нет плейлистов')
-      }
-    } catch (e) {
-      return res.status(500).json({error: e.message});
-    }
-  }
-
-  async deletePublication(req, res) {
-    try {
-      const userId = req.userId
-      const author = req.user
-      const {publicationId} = req.body
-      const today = new Date()
-      const newDateOfDelete = new Date(today);
-      newDateOfDelete.setDate(today.getDate() + 14);
-      const publication = await Publication.findByPk(publicationId)
-      if (publication.userId === userId) {
-        await Publication.update({
-            date_of_delete: newDateOfDelete
-          },
-          {
-            where: {id: publicationId}
-          }
-        )
-
-        const subscribers = await Subscription.findAll({where: {authorId: userId}})
-        const subscribersIds = subscribers.map(item => item.userId)
-        let templateText = await Type_notification.findOne({where: {id: 6}})
-        for (let item of subscribersIds) {
-          let notification_text = templateText.text.replace('{nickname}', author.nickname).replace('{title}', publication.title)
-          await Notification.create({userId: item, notification_text, typeNotificationId: 6})
-        }
-
-      }
-
-      return res.json(publication)
-    } catch (e) {
-      return res.status(500).json({error: e.message});
-    }
-  }
-
-  async likePublication(req, res) {
-    try {
-      const userId = req.userId
-      const {publicationId} = req.body
-      const like = await Publication_likes.findOne({where: {userId, publicationId}})
-      if (like) {
-        await Publication_likes.destroy({where: {publicationId, userId}})
-      } else {
-        await Publication_likes.create({userId, publicationId})
-      }
-      return res.json("усе")
-    } catch (e) {
-      return res.status(500).json({error: e.message});
-    }
-  }
-
   async getMainPublications(req, res) {
     try {
       const userId = req.userId
@@ -310,7 +222,7 @@ class PublicationController {
           });
 
           for (let publication of publications) {
-            if (publication.publication_blocks) { // Обратите внимание на правильный регистр: Publication_block -> Publication_blocks
+            if (publication.publication_blocks) {
               publication.publication_blocks.forEach(block => {
                 if (block.type === 'file') {
                   block.file.url = `/static/${block.file.name}`;
@@ -487,6 +399,144 @@ class PublicationController {
     }
   }
 
+  async getPublicationsInFolder(req, res) {
+    try {
+      const {folderId} = req.query
+      const userId = req.userId
+      const publications = await Publication.findAll({
+        include: [
+          {
+            model: Storage_publication,
+            required: true, // Используем inner join, чтобы получить только соответствующие записи
+            where: {folderOfPublicationId: folderId}
+          },
+          {
+            model: Publication_buy,
+            required: false,
+            where: {userId},
+            attributes: ['userId'] // Указываем атрибуты, чтобы Sequelize не генерировал SELECT *
+          }
+        ],
+        raw: true // Возвращаем данные как plain JSON objects
+      });
+
+      // Добавляем маркер isPurchased в каждую публикацию
+      publications.forEach(pub => {
+        pub.isPurchased = !!pub['Publication_buys.userId']; // Преобразуем userId в boolean
+        delete pub['Publication_buys.userId']; // Удаляем лишний атрибут из итогового объекта
+      });
+
+      res.json(publications)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getPublication(req, res) {
+    try {
+      const userId = req.userId
+      const {id} = req.query
+      const publication = await Publication.findOne({
+        where: {id},
+        include: [
+          {model: Publication_block, include: {model: File}}
+        ]
+      })
+      if (publication) {
+        // Преобразование данных для включения полного пути к файлам
+        const publicationData = publication.toJSON();
+        publicationData.publication_blocks = publicationData.publication_blocks.map(block => {
+          if (block.file) {
+            block.file.url = `/static/${block.file.name}`;
+          }
+          return block;
+        });
+
+        const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})
+        if (created) {
+          // Если запись была создана, увеличиваем views в таблице Publication
+          const publication = await Publication.findByPk(id)
+          if (publication) {
+            await publication.increment('views_count');
+          }
+        }
+        return res.json(publicationData);
+      } else {
+        return res.status(404).json({message: 'Запись не найдена'});
+      }
+
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getUserFolders(req, res) {
+    try {
+      const {userId} = req.query
+      const folders = await Folder_of_publication.findAll({
+        where: {userId}
+      })
+      if (folders.length > 0) {
+        return res.json(folders)
+      } else {
+        return res.json('У пользователя нет плейлистов')
+      }
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async deletePublication(req, res) {
+    try {
+      const userId = req.userId
+      const author = req.user
+      const {publicationId} = req.body
+      const today = new Date()
+      const newDateOfDelete = new Date(today);
+      newDateOfDelete.setDate(today.getDate() + 14);
+      const publication = await Publication.findByPk(publicationId)
+      if (publication.userId === userId) {
+        await Publication.update({
+            date_of_delete: newDateOfDelete
+          },
+          {
+            where: {id: publicationId}
+          }
+        )
+
+        const subscribers = await Subscription.findAll({where: {authorId: userId}})
+        const subscribersIds = subscribers.map(item => item.userId)
+        let templateText = await Type_notification.findOne({where: {id: 6}})
+        for (let item of subscribersIds) {
+          let notification_text = templateText.text.replace('{nickname}', author.nickname).replace('{title}', publication.title)
+          await Notification.create({userId: item, notification_text, typeNotificationId: 6})
+        }
+
+      }
+
+      return res.json(publication)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async likePublication(req, res) {
+    try {
+      const userId = req.userId
+      const {publicationId} = req.body
+      const like = await Publication_likes.findOne({where: {userId, publicationId}})
+      if (like) {
+        await Publication_likes.destroy({where: {publicationId, userId}})
+      } else {
+        await Publication_likes.create({userId, publicationId})
+      }
+      return res.json("усе")
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+
   async createFolder(req, res) {
     try {
       const userId = req.userId
@@ -530,6 +580,7 @@ class PublicationController {
       return res.status(500).json({error: e.message});
     }
   }
+
 
   async buyPublication(req, res) {
     try {
