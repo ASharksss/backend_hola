@@ -117,9 +117,19 @@ const Wallet = sequelize.define('wallet', {
 const Transaction = sequelize.define('transaction', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   purchaseCost: {type: DataTypes.DOUBLE},
-  commission: {type: DataTypes.DOUBLE},
+  commission: {type: DataTypes.DOUBLE, defaultValue: 1},
   transferToAuthor: {type: DataTypes.DOUBLE},
   transferToService: {type: DataTypes.DOUBLE}
+})
+
+const Finance_report = sequelize.define('finance_report', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  start_billing_period: {type: DataTypes.DATE},
+  end_billing_period: {type: DataTypes.DATE}
+})
+
+const Report_transaction = sequelize.define('report_transaction', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
 
 const Basket = sequelize.define('basket', {
@@ -168,6 +178,19 @@ const Folder_tag = sequelize.define('folder_tag', {
 
 
 //Relationships
+
+//Прикрепление транзакции к аналитике
+Transaction.hasMany(Report_transaction)
+Report_transaction.belongsTo(Transaction)
+
+//Прикрепление финансового отчета к аналитике
+Finance_report.hasMany(Report_transaction)
+Report_transaction.belongsTo(Finance_report)
+
+//Прикрепление автора к финансовому отчету
+User.hasMany(Finance_report)
+Finance_report.belongsTo(User)
+
 //Привязка покупки к транзакции
 Publication_buy.hasMany(Transaction)
 Transaction.belongsTo(Publication_buy)

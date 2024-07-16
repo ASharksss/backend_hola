@@ -4,17 +4,18 @@ const publicationController = require('../controller/publicationController')
 const {isAuthorized} = require("../middleware/authMiddleware");
 
 router.post('/createPublication', isAuthorized, publicationController.createPublication)
-router.get('/getUserPublications', isAuthorized, publicationController.getUserPublications)
-router.get('/getPublication', isAuthorized, publicationController.getPublication)
-router.get('/getPublicationsInFolder', isAuthorized, publicationController.getPublicationsInFolder)
-router.get('/getUserFolders', isAuthorized, publicationController.getUserFolders)
 router.put('/deletePublication', isAuthorized, publicationController.deletePublication)
 router.post('/likePublication', isAuthorized, publicationController.likePublication)
 router.post('/createFolder', isAuthorized, publicationController.createFolder)
 router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)
 router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
-router.get('/getMainPublications', isAuthorized, publicationController.getMainPublications)
 router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket)
+router.get('/getUserPublications', isAuthorized, publicationController.getUserPublications)
+router.get('/getPublication', isAuthorized, publicationController.getPublication)
+router.get('/getPublicationsInFolder', isAuthorized, publicationController.getPublicationsInFolder)
+router.get('/getUserFolders', isAuthorized, publicationController.getUserFolders)
+router.get('/getMainPublications', isAuthorized, publicationController.getMainPublications)
+router.get('/getBasket', isAuthorized, publicationController.getBasket)
 
 
 module.exports = router

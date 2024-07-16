@@ -23,7 +23,7 @@ const {
   Publication_block,
   Subscription,
   Type_notification,
-  Notification, Basket, Publication_views
+  Notification, Basket, Publication_views, Transaction, Wallet
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op, Sequelize} = require("sequelize");
@@ -584,40 +584,94 @@ class PublicationController {
   async buyPublication(req, res) {
     try {
       const userId = req.userId;
+      const user = req.user;
       const {publicationIds} = req.body;
-
+      let buy
+      let publication
+      let publications = []
+      let authorWalletId
+      let textTemplate = await Type_notification.findOne({where: {id: 7}})
+      //Проверка на publicationIds
       if (!Array.isArray(publicationIds) || publicationIds.length === 0) {
         return res.status(400).json({error: 'Не указан массив publicationIds или он пуст'});
       }
-
-      const boughtPublications = [];
-      const failedPublications = [];
-
+      const boughtPublications = []; //Купленные
+      const failedPublications = [];// Уже приобретенные
       for (const publicationId of publicationIds) {
         const candidate = await Publication_buy.findOne({where: {publicationId, userId}});
-
         if (candidate) {
           failedPublications.push(publicationId);
         } else {
-          const buy = await Publication_buy.create({publicationId, userId});
+          buy = await Publication_buy.create({publicationId, userId});
           boughtPublications.push(publicationId);
+          publication = await Publication.findOne({
+            where: {id: publicationId},
+            attributes: ['title', 'price'],
+            include: {model: User, attributes: ['id', 'nickname']}
+          })
+          publications.push(publication)
+          //Находим кошелек автора
+          authorWalletId = await Wallet.findOne({
+            where: {userId: publication.user.id},
+            attributes: ['id', 'balance']
+          })
+          //Создаем транзакцию
+          let transaction = await Transaction.create({
+            publicationBuyId: buy.id,
+            purchaseCost: publication.price,
+            transferToAuthor: publication.price * (1 - 0.01),
+            transferToService: publication.price * (1 - 0.99),
+            walletId: authorWalletId.id
+          })
+
+          //Обновляем баланс
+          let newBalance = authorWalletId.balance + transaction.transferToAuthor
+          await Wallet.update(
+            {balance: newBalance},
+            {where: {id: authorWalletId.id}}
+          )
+          //Отправляем уведомление
+          let notification_text = textTemplate.text
+            .replace('{nickname}', user.nickname).replace('{title}', publication.title)
+          await Notification.create({
+            userId: publication.user.id,
+            notification_text,
+            typeNotificationId: 7
+          })
         }
       }
-
+      //Удаляем из корзины купленные публикации
       if (boughtPublications.length > 0) {
         await Basket.destroy({where: {userId, publicationId: boughtPublications}});
       }
-
       return res.json({
         bought: boughtPublications,
-        alreadyBought: failedPublications
+        alreadyBought: failedPublications,
+        publications
       })
     } catch (e) {
       return res.status(500).json({error: e.message});
     }
   }
 
-
+  async getBasket(req, res) {
+    try {
+      const userId = req.userId
+      const publications = await Basket.findAll({
+        where: {userId},
+        include: [
+          {
+            model: Publication,
+            attributes: ['title', 'price'],
+            include: [{model: User, attributes: ['nickname']}]
+          }
+        ]
+      })
+      return res.json(publications)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
 
 }
 
