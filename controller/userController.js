@@ -123,7 +123,8 @@ class UserController {
         name: avatarName,
         typeFileId: 3,
         userId,
-        approve: false
+        approve: false,
+        url: `/static/${avatarName}`
       })
       return res.json(image)
     } catch (e) {
@@ -136,7 +137,7 @@ class UserController {
       const cover = req.files.cover
       const userId = req.userId
       //Проверка на существующую обложку
-      const coverExist = await File.findOne({where: {userId, typeFileId: 4}})
+      const coverExist = await File.findOne({where: {userId, typeFileId: 1}})
       if (coverExist) {
         await coverExist.destroy() //Если существует - удаляем
       }
@@ -149,7 +150,7 @@ class UserController {
       await cover.mv(path.resolve(__dirname, '..', 'static', coverName));
       const image = await File.create({
         name: coverName,
-        typeFileId: 4,
+        typeFileId: 1,
         userId,
         approve: false
       })

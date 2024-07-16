@@ -218,19 +218,29 @@ class PublicationController {
               },
               attributes: [],
             },
-              {model: Publication_block, include: {model: File}}
+              {
+                model: User, attributes: ['nickname'],
+                include: {
+                  model: File,
+                  where: {typeFileId: 3,},
+                  required: false
+                }
+              },
+              {
+                model: Publication_buy,
+                where: {userId}, // Фильтр по текущему пользователю
+                attributes: ['userId', 'publicationId'],
+                required: false // Разрешаем LEFT JOIN, чтобы включить все публикации
+              }
             ],
           });
 
-          for (let publication of publications) {
-            if (publication.publication_blocks) {
-              publication.publication_blocks.forEach(block => {
-                if (block.type === 'file') {
-                  block.file.url = `/static/${block.file.name}`;
-                }
-              });
-            }
-          }
+          publications = publications.map(publication => {
+            let plainPublication = publication.toJSON(); // Преобразуем в plain object
+            // Проверяем наличие покупок
+            plainPublication.isAvialable = plainPublication.publication_buys.length > 0 || plainPublication.price === 0;
+            return plainPublication;
+          });
 
           break;
         case 'subscriptions':
