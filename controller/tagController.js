@@ -37,11 +37,12 @@ class TagController {
 
   async getCreativeTagByGroup(req, res) {
     try {
-      const {groups} = req.body
+      let {groups} = req.query
+      groups = groups.split(',')
       const tags = await Creative_tag.findAll({
         where: {
           groupTagId: {
-            [Op.in] : groups
+            [Op.in]: groups
           }
         }
       })

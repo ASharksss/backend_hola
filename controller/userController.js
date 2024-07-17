@@ -9,6 +9,7 @@ const {
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
 const {Op} = require("sequelize");
+const bcrypt = require("bcrypt");
 
 class UserController {
 
@@ -290,6 +291,28 @@ class UserController {
         return res.json({user, avatarUrl, coverUrl, subscribersCount, socialMedia, publications})
       }
       return res.json(user, subscribersCount, socialMedia)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async updateUser(req, res) {
+    try {
+      const userId = req.userId
+      const user = req.user
+      let newUser
+      console.log(user)
+      const {nickname, aboutMe, date_of_birth, sex, newPassword, oldPassword} = req.body
+      let checkPassword = bcrypt.compareSync(oldPassword, user.password)
+      if (checkPassword) {
+        const hashPassword = await bcrypt.hash(newPassword, 10)
+        newUser = await User.update(
+          {nickname, aboutMe, date_of_birth, sex, password: hashPassword},
+          {where: {id: userId}}
+        )
+      }
+
+      return res.json(newUser)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }

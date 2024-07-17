@@ -15,5 +15,6 @@ router.get('/getMySubscriptions', isAuthorized, userController.getMySubscription
 router.get('/getUser', isAuthorized, userController.getUser)
 router.get('/getNotifications', isAuthorized, userController.getNotifications)
 router.get('/getNotificationCount', isAuthorized, userController.getNotificationCount)
+router.put('/updateUser', isAuthorized, userController.updateUser)
 
 module.exports = router
