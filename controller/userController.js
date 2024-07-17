@@ -48,6 +48,48 @@ class UserController {
     }
   }
 
+  async getMySubscriptions(req, res) {
+    try {
+      const userId = req.userId
+      const subscriptions = await Subscription.findAll({
+        where: {userId: userId}
+      })
+      let authorIds = subscriptions.map(item => item.authorId)
+      let authors = await User.findAll({
+        where: {
+          id: {
+            [Op.in]: authorIds
+          }
+        },
+        attributes: ['id', 'nickname', 'aboutMe']
+      })
+
+      // Преобразуем авторов в обычные объекты и добавляем avatarUrl и coverUrl
+      let authorsWithUrls = await Promise.all(authors.map(
+        async (author) => {
+          // Преобразуем Sequelize объект в обычный объект
+          let authorPlain = author.toJSON();
+
+          // Получение аватарки
+          let avatar = await File.findOne({where: {userId: author.id, typeFileId: 3}});
+          if (avatar) {
+            authorPlain.avatarUrl = `/static/${avatar.name}`;
+          }
+
+          // Получение обложки профиля
+          const cover = await File.findOne({where: {userId: author.id, typeFileId: 1}});
+          if (cover) {
+            authorPlain.coverUrl = `/static/${cover.name}`;
+          }
+          return authorPlain;
+        }));
+
+      return res.json(authorsWithUrls);
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
   async createUserInterests(req, res) {
     try {
       const userId = req.userId
@@ -202,6 +244,7 @@ class UserController {
           ]
         })
       }
+      //Cтавим флаг "Доступно"
       publications = publications.map(publication => {
         let plainPublication = publication.toJSON(); // Преобразуем в plain object
         // Проверяем наличие покупок
