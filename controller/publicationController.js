@@ -40,6 +40,7 @@ class PublicationController {
       } = req.body;
       const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
       const cover = req.files?.cover
+      let coverName = null
       if (role !== 2) {
         const foundGroupTags = await Group_tag.findAll({
           where: {
@@ -72,20 +73,22 @@ class PublicationController {
         await Wallet.create({userId})
       }
 
-      //Прикрепление обложки для публикации
-      const coverTypeFile = cover.name.split('.').pop();
+      if (cover) {
+        //Прикрепление обложки для публикации
+        const coverTypeFile = cover.name.split('.').pop();
 
-      if (coverTypeFile !== 'jpeg' && coverTypeFile !== 'png' && coverTypeFile !== 'jpg') {
-        return res.json('Неподходящее расширение файла для обложки');
+        if (coverTypeFile !== 'jpeg' && coverTypeFile !== 'png' && coverTypeFile !== 'jpg') {
+          return res.json('Неподходящее расширение файла для обложки');
+        }
+        coverName = `${uuidv4()}.${coverTypeFile}`;
+        await cover.mv(path.resolve(__dirname, '..', 'static', coverName));
+        await File.create({
+          name: coverName,
+          typeFileId: 4,
+          userId,
+          approve: false,
+        })
       }
-      const coverName = `${uuidv4()}.${coverTypeFile}`;
-      await cover.mv(path.resolve(__dirname, '..', 'static', coverName));
-      await File.create({
-        name: coverName,
-        typeFileId: 4,
-        userId,
-        approve: false,
-      })
 
       const publication = await Publication.create({
         title,
@@ -94,7 +97,7 @@ class PublicationController {
         ageLimitId,
         userId,
         statusOfPublicationId: 1,
-        coverUrl: `/static/${coverName}`
+        coverUrl: coverName ? `/static/${coverName}` : null
       });
 
       const parsedTags = JSON.parse(tags);
@@ -160,7 +163,7 @@ class PublicationController {
       }
       return res.json(notificationText);
     } catch (e) {
-      console.error("Ошибка:", e.message); // Отладочное сообщение
+      console.error("Ошибка:", e); // Отладочное сообщение
       return res.status(500).json({error: e.message});
     }
   }
