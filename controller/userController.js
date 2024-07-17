@@ -4,10 +4,11 @@ const {
   Subscription,
   UsersSocialMedia,
   User, File,
-  Type_notification, Notification, SocialMedia
+  Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
+const {Op} = require("sequelize");
 
 class UserController {
 
@@ -163,7 +164,51 @@ class UserController {
   async getUser(req, res) {
     try {
       const userId = req.query.userId
+      let creative_tags = req.query.creative_tags
       let coverUrl, avatarUrl
+      let publications
+      if (creative_tags) {
+        creative_tags = creative_tags.split(',')
+        publications = await Publication.findAll({
+          where: {userId},
+          include: [
+            {
+              model: Publication_tag,
+              where: {
+                creativeTagId: {
+                  [Op.in]: creative_tags
+                },
+              },
+            },
+            {
+              model: Publication_buy, //Для проверки доступности публикации
+              where: {userId}, //Фильтр по текущему пользователя
+              attributes: ['userId', 'publicationId'],
+              required: false //Разрешаем LEFT JOIN,чтобы включить все публикации
+            }
+          ]
+        })
+      } else {
+        //Получение всех постов пользователя
+        publications = await Publication.findAll({
+          where: {userId},
+          include: [
+            {
+              model: Publication_buy, //Для проверки доступности публикации
+              where: {userId}, //Фильтр по текущему пользователя
+              attributes: ['userId', 'publicationId'],
+              required: false //Разрешаем LEFT JOIN,чтобы включить все публикации
+            }
+          ]
+        })
+      }
+      publications = publications.map(publication => {
+        let plainPublication = publication.toJSON(); // Преобразуем в plain object
+        // Проверяем наличие покупок
+        plainPublication.isAvialable = plainPublication.publication_buys.length > 0 || plainPublication.price === 0;
+        return plainPublication;
+      });
+
       const user = await User.findByPk(userId, {
         attributes: ['nickname']
       })
@@ -182,7 +227,7 @@ class UserController {
       if (subscribersCount === 0) {
         subscribersCount = 'Нет подписчиков'
       }
-
+      //Получение социальный сетей
       let socialMedia = await UsersSocialMedia.findAll({
         attributes: ['text'],
         where: {userId},
@@ -190,18 +235,18 @@ class UserController {
       })
 
       if (avatar && !cover) {
-        return res.json({user, avatarUrl, subscribersCount, socialMedia})
+        return res.json({user, avatarUrl, subscribersCount, socialMedia, publications})
       }
       if (!avatar && cover) {
-        return res.json({user, coverUrl, subscribersCount, socialMedia})
+        return res.json({user, coverUrl, subscribersCount, socialMedia, publications})
       }
       if (!avatar && !cover) {
-        return res.json({user, subscribersCount, socialMedia})
+        return res.json({user, subscribersCount, socialMedia, publications})
       }
       if (avatar && cover) {
-        return res.json({user, avatarUrl, coverUrl, subscribersCount, socialMedia})
+        return res.json({user, avatarUrl, coverUrl, subscribersCount, socialMedia, publications})
       }
-      return res.json(user)
+      return res.json(user, subscribersCount, socialMedia)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }

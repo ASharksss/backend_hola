@@ -86,6 +86,7 @@ class AuthController {
         // secure: false,
         sameSite: false
       })
+      return res.status(200).json('Пака')
     } catch (e) {
       return res.status(401).json({message: e.message})
     }

@@ -35,7 +35,7 @@ class PublicationController {
       const role = req.user.roleId;
       const {
         title, description, price,
-        ageLimitId, tags, typeFileId,
+        ageLimitId, tags,
         blocks, groupTags, creativeTags,
       } = req.body;
       const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
@@ -69,11 +69,12 @@ class PublicationController {
 
         await Author_tag.bulkCreate(authorTagsData);
         await User.update({roleId: 2}, {where: {id: userId}});
+        await Wallet.create({userId})
       }
 
       //Прикрепление обложки для публикации
       const coverTypeFile = cover.name.split('.').pop();
-      console.log(`Тип файла: ${coverTypeFile}`)
+
       if (coverTypeFile !== 'jpeg' && coverTypeFile !== 'png' && coverTypeFile !== 'jpg') {
         return res.json('Неподходящее расширение файла для обложки');
       }
@@ -113,7 +114,7 @@ class PublicationController {
 
             const file = await File.create({
               name: fileName,
-              typeFileId,
+              typeFileId: 2,
               userId,
               approve: false,
             });

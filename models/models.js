@@ -111,7 +111,7 @@ const Type_notification = sequelize.define('type_notification', {
 
 const Wallet = sequelize.define('wallet', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-  balance: {type: DataTypes.DOUBLE}
+  balance: {type: DataTypes.DOUBLE, defaultValue: 0}
 })
 
 const Transaction = sequelize.define('transaction', {
