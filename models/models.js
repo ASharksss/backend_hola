@@ -80,7 +80,8 @@ const File = sequelize.define('file', {
 
 const Folder_of_publication = sequelize.define('folder_of_publication', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-  name: {type: DataTypes.STRING}
+  name: {type: DataTypes.STRING},
+  description: {type: DataTypes.STRING}
 })
 
 const Comment = sequelize.define('comment', {

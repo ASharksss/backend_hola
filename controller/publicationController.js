@@ -70,7 +70,7 @@ class PublicationController {
 
         await Author_tag.bulkCreate(authorTagsData);
         await User.update({roleId: 2}, {where: {id: userId}});
-        await Wallet.create({userId})
+        await Wallet.findOrCreate({where: {userId}})
       }
 
       if (cover) {
