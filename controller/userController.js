@@ -497,6 +497,19 @@ class UserController {
       return res.status(500).json({error: e.message})
     }
   }
+
+  async getSimilarAuthors(req, res) {
+    try {
+      const userId = req.userId
+      const userInterests = await User_interest.findAll({
+        where: {userId}
+      })
+
+      return res.json(userInterests)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
 }
 
 module.exports = new UserController()
