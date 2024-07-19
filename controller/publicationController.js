@@ -450,23 +450,24 @@ class PublicationController {
   async getPublication(req, res) {
     try {
       const userId = req.userId
-      const {id} = req.query
-      const publication = await Publication.findOne({
-        where: {id},
-        include: [
-          {model: Publication_block, include: {model: File}}
-        ]
-      })
-      if (publication) {
-        // Преобразование данных для включения полного пути к файлам
-        const publicationData = publication.toJSON();
-        publicationData.publication_blocks = publicationData.publication_blocks.map(block => {
-          if (block.file) {
-            block.file.url = `/static/${block.file.name}`;
-          }
-          return block;
-        });
+      const id = req.params.id
+      let publication
 
+      let purchase = await Publication_buy.findOne({where: {userId, publicationId: id}})
+      publication = await Publication.findOne({
+        where: {id}
+      })
+      let isAvialable = purchase || publication.price === 0
+      if (isAvialable) {
+        publication = await Publication.findOne({
+          where: {id},
+          include: {
+            model: Publication_block, include: {model: File}
+          }
+        })
+      }
+      const publicationData = publication.toJSON();
+      if (publication ) {
         const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})
         if (created) {
           // Если запись была создана, увеличиваем views в таблице Publication
@@ -475,11 +476,19 @@ class PublicationController {
             await publication.increment('views_count');
           }
         }
+        if (isAvialable){
+          // Преобразование данных для включения полного пути к файлам
+          publicationData.publication_blocks = publicationData.publication_blocks.map(block => {
+            if (block.file) {
+              block.file.url = `/static/${block.file.name}`;
+            }
+            return block;
+          });
+        }
         return res.json(publicationData);
       } else {
         return res.status(404).json({message: 'Запись не найдена'});
       }
-
     } catch (e) {
       return res.status(500).json({error: e.message});
     }
@@ -546,37 +555,6 @@ class PublicationController {
       return res.json(folder)
     } catch (e) {
       return res.status(500).json({error: e.message});
-    }
-  }
-
-  async getUserFolders(req, res) {
-    try {
-      const {userId} = req.query
-      const folders = await Folder_of_publication.findAll({
-        where: {userId}
-      })
-      // Извлекаем последнюю публикацию для каждой папки
-      const foldersWithLatestPublications = await Promise.all(folders.map(async folder => {
-        const latestPublication = await Storage_publication.findOne({
-          where: {folderOfPublicationId: folder.id},
-          include: [{
-            model: Publication
-          }],
-          order: [['createdAt', 'DESC']] //Последний добавленный в плейлист пост
-        });
-        return {
-          ...folder.toJSON(),
-          latest_publication: latestPublication ? [latestPublication] : []
-        };
-      }));
-
-      if (folders.length > 0) {
-        return res.json(foldersWithLatestPublications);
-      } else {
-        return res.json('У пользователя нет плейлистов')
-      }
-    } catch (e) {
-      return res.status(500).json({error: e.message})
     }
   }
 
@@ -683,6 +661,37 @@ class PublicationController {
     }
   }
 
+  async getUserFolders(req, res) {
+    try {
+      const {userId} = req.query
+      const folders = await Folder_of_publication.findAll({
+        where: {userId}
+      })
+      // Извлекаем последнюю публикацию для каждой папки
+      const foldersWithLatestPublications = await Promise.all(folders.map(async folder => {
+        const latestPublication = await Storage_publication.findOne({
+          where: {folderOfPublicationId: folder.id},
+          include: [{
+            model: Publication
+          }],
+          order: [['createdAt', 'DESC']] //Последний добавленный в плейлист пост
+        });
+        return {
+          ...folder.toJSON(),
+          latest_publication: latestPublication ? [latestPublication] : []
+        };
+      }));
+
+      if (folders.length > 0) {
+        return res.json(foldersWithLatestPublications);
+      } else {
+        return res.json('У пользователя нет плейлистов')
+      }
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
   async getBasket(req, res) {
     try {
       const userId = req.userId
@@ -697,6 +706,14 @@ class PublicationController {
         ]
       })
       return res.json(publications)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async getSimilarPublications(req, res) {
+    try {
+
     } catch (e) {
       return res.status(500).json({error: e.message})
     }
