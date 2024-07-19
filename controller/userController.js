@@ -211,7 +211,6 @@ class UserController {
         }))
       })
 
-      return res.json(authorTags)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }

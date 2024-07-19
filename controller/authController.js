@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt')
 const {Op} = require("sequelize");
-const {User} = require("../models/models");
+const {User, File} = require("../models/models");
 const {refreshToken, generateTokens} = require("../services/utils");
 
 class AuthController {
@@ -69,6 +69,19 @@ class AuthController {
         // secure: true,
         sameSite: true
       })
+      let avatar = await File.findOne({
+        where: {userId: user.id, typeFileId: 3}
+      })
+      let profileCover = await File.findOne({
+        where: {userId: user.id, typeFileId: 1}
+      })
+      if (avatar) {
+        user.avatar = `/static/${avatar.name}`
+      }
+      if (profileCover) {
+        user.profileCover = `/static/${profileCover.name}`
+      }
+
       return res.json({token: accessToken, email: user.email, profile: user});
     } catch (e) {
       console.log(e)

@@ -485,22 +485,6 @@ class PublicationController {
     }
   }
 
-  async getUserFolders(req, res) {
-    try {
-      const {userId} = req.query
-      const folders = await Folder_of_publication.findAll({
-        where: {userId}
-      })
-      if (folders.length > 0) {
-        return res.json(folders)
-      } else {
-        return res.json('У пользователя нет плейлистов')
-      }
-    } catch (e) {
-      return res.status(500).json({error: e.message});
-    }
-  }
-
   async deletePublication(req, res) {
     try {
       const userId = req.userId
@@ -562,6 +546,37 @@ class PublicationController {
       return res.json(folder)
     } catch (e) {
       return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getUserFolders(req, res) {
+    try {
+      const {userId} = req.query
+      const folders = await Folder_of_publication.findAll({
+        where: {userId}
+      })
+      // Извлекаем последнюю публикацию для каждой папки
+      const foldersWithLatestPublications = await Promise.all(folders.map(async folder => {
+        const latestPublication = await Storage_publication.findOne({
+          where: {folderOfPublicationId: folder.id},
+          include: [{
+            model: Publication
+          }],
+          order: [['createdAt', 'DESC']] //Последний добавленный в плейлист пост
+        });
+        return {
+          ...folder.toJSON(),
+          latest_publication: latestPublication ? [latestPublication] : []
+        };
+      }));
+
+      if (folders.length > 0) {
+        return res.json(foldersWithLatestPublications);
+      } else {
+        return res.json('У пользователя нет плейлистов')
+      }
+    } catch (e) {
+      return res.status(500).json({error: e.message})
     }
   }
 
