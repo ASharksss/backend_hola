@@ -16,6 +16,7 @@ router.get('/getPublicationsInFolder', isAuthorized, publicationController.getPu
 router.get('/getUserFolders', isAuthorized, publicationController.getUserFolders)
 router.get('/getMainPublications', isAuthorized, publicationController.getMainPublications)
 router.get('/getBasket', isAuthorized, publicationController.getBasket)
+router.get('/getSimilarPublications/:id', isAuthorized, publicationController.getSimilarPublications)
 
 
 module.exports = router

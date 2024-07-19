@@ -711,9 +711,35 @@ class PublicationController {
     }
   }
 
+  // НАДО ПРОВЕРИТЬ НА ДРУГОМ МАССИВЕ ТЕГОВ, БУДУТ ЛИ ДУБЛИ ПУБЛИКАЦИЙ
   async getSimilarPublications(req, res) {
     try {
+      const publicationId = req.params.id
+      //Берем теги текущей публикации
+      const publicationTags = await Publication_tag.findAll({
+        where: {publicationId}
+      })
+      let publicationTagsIds = publicationTags.map(tag => tag.creativeTagId)
 
+      //Находим записи похожие записи тегов
+      let similarTagsIds = await Publication_tag.findAll({
+        where: {
+          creativeTagId: {
+            [Op.in]: publicationTagsIds
+          }
+        }
+      })
+      let similarPublicationIds = similarTagsIds.map(publication => publication.publicationId)
+      //Находим публикации по тегам
+      let similarPublication = await Publication.findAll({
+        where: {
+          id: {
+            [Op.in]: similarPublicationIds
+          }
+        },
+        attributes: ['id', 'title', 'price', 'views_count', 'coverUrl', 'createdAt', 'date_of_delete', ]
+      })
+      return res.json(similarPublication)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }
