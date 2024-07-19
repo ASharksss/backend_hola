@@ -294,9 +294,42 @@ class UserController {
         name: coverName,
         typeFileId: 1,
         userId,
-        approve: false
+        approve: false,
+        url: `/static/${coverName}`
       })
       return res.json(image)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async getAvatar(req, res) {
+    try {
+      const userId = req.userId
+      const avatar = await File.findOne({
+        where: {userId, typeFileId: 3}
+      })
+      if (avatar) {
+        return res.json(avatar)
+      } else {
+        return res.json('У пользователя нет аватарки')
+      }
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async getProfileCover(req, res) {
+    try {
+      const userId = req.userId
+      const profileCover = await File.findOne({
+        where: {userId, typeFileId: 1}
+      })
+      if (profileCover) {
+        return res.json(profileCover)
+      } else {
+        return res.json('У пользователя нет обложки')
+      }
     } catch (e) {
       return res.status(500).json({error: e.message})
     }
