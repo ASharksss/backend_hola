@@ -40,7 +40,7 @@ const Subscription = sequelize.define('subscription', {
 const Publication = sequelize.define('publication', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   title: {type: DataTypes.STRING},
-  description: {type: DataTypes.STRING},
+  description: {type: DataTypes.TEXT},
   price: {type: DataTypes.INTEGER},
   date_of_delete: {type: DataTypes.DATE, defaultValue: null},
   views_count: {type: DataTypes.INTEGER, defaultValue: 0},
@@ -50,7 +50,7 @@ const Publication = sequelize.define('publication', {
 const Publication_block = sequelize.define('publication_block', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   type: {type: DataTypes.STRING},
-  text: {type: DataTypes.STRING},
+  text: {type: DataTypes.TEXT},
 })
 
 //Статусы публикаций

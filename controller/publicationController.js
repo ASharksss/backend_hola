@@ -554,8 +554,8 @@ class PublicationController {
   async createFolder(req, res) {
     try {
       const userId = req.userId
-      const {name, tags} = req.body
-      const folder = await Folder_of_publication.create({name, userId})
+      const {name, tags, description} = req.body
+      const folder = await Folder_of_publication.create({name, userId, description})
       tags.map(async tag => {
         await Folder_tag.create({creativeTagId: tag.id, folderOfPublicationId: folder.id})
       })

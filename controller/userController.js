@@ -4,7 +4,7 @@ const {
   Subscription,
   UsersSocialMedia,
   User, File,
-  Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag
+  Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag, Creative_tag, Group_tag
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
@@ -94,14 +94,64 @@ class UserController {
   async createUserInterests(req, res) {
     try {
       const userId = req.userId
-      console.log(userId)
       const {tags} = req.body
       tags.map(async tag => {
-        await User_interest.create({userId, creativeTagId: tag.id})
+        await User_interest.findOrCreate({where: {userId, creativeTagId: tag.id}})
       })
       return res.json(tags)
     } catch (e) {
       return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getUserInterests(req, res) {
+    try {
+      const userId = req.userId
+      //Находим интересы пользователя
+      const userInterests = await Group_tag.findAll({
+        include: [
+          {
+            model: Creative_tag,
+            include: [
+              {
+                model: User_interest,
+                attributes: [],
+                where: { userId: userId }
+              }
+            ]
+          }
+        ],
+        group: ['group_tag.id', 'creative_tags.id'] //Группируем по ids
+      })
+
+      // Форматирование результатов ВАРИАНТ 1
+      const var1 = userInterests.map(group => ({
+        groupId: group.id,
+        groupName: group.name,
+        tags: group.creative_tags.map(tag => ({
+          id: tag.id,
+          name: tag.name
+        }))
+      })).filter(group => group.tags.length > 0);
+
+      // Форматирование результатов ВАРИАНТ 2
+      const var2 = userInterests.map(group => ({
+        groupId: group.id,
+        tags: group.creative_tags.map(tag => tag.id)
+      }))
+        .filter(group => group.tags.length > 0);
+
+      //Один из вариантов уйдет после того, как Нафис поэкспериментирует
+      return res.json({
+        var1,
+        groupIds: var2.map(group => group.groupId),
+        tags: var2.flatMap(group => ({
+          groupId: group.groupId,
+          tagsIds: group.tags
+        }))
+      })
+    } catch (e) {
+      return res.status(500).json({error: e.message})
     }
   }
 
