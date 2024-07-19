@@ -8,7 +8,7 @@ const {
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
-const {Op} = require("sequelize");
+const {Op, where} = require("sequelize");
 const bcrypt = require("bcrypt");
 
 class UserController {
@@ -116,7 +116,7 @@ class UserController {
               {
                 model: User_interest,
                 attributes: [],
-                where: { userId: userId }
+                where: {userId: userId}
               }
             ]
           }
@@ -165,6 +165,55 @@ class UserController {
       return res.json(tags)
     } catch (e) {
       return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getAuthorTags(req, res) {
+    try {
+      const userId = req.userId
+      const authorTags = await Group_tag.findAll({
+        include:
+          {
+            model: Creative_tag,
+            include: {
+              model: Author_tag,
+              attributes: [],
+              where: {userId: userId}
+            }
+          },
+        group: ['group_tag.id', 'creative_tags.id']
+      })
+
+      // Форматирование результатов ВАРИАНТ 1
+      const var1 = authorTags.map(group => ({
+        groupId: group.id,
+        groupName: group.name,
+        tags: group.creative_tags.map(tag => ({
+          id: tag.id,
+          name: tag.name
+        }))
+      })).filter(group => group.tags.length > 0);
+
+      // Форматирование результатов ВАРИАНТ 2
+      const var2 = authorTags.map(group => ({
+        groupId: group.id,
+        tags: group.creative_tags.map(tag => tag.id)
+      }))
+        .filter(group => group.tags.length > 0);
+
+      //Один из вариантов уйдет после того, как Нафис поэкспериментирует
+      return res.json({
+        var1,
+        groupIds: var2.map(group => group.groupId),
+        tags: var2.flatMap(group => ({
+          groupId: group.groupId,
+          tagsIds: group.tags
+        }))
+      })
+
+      return res.json(authorTags)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
     }
   }
 
