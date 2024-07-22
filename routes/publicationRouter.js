@@ -5,6 +5,7 @@ const {isAuthorized} = require("../middleware/authMiddleware");
 
 router.put('/deletePublication', isAuthorized, publicationController.deletePublication)
 router.post('/createPublication', isAuthorized, publicationController.createPublication)
+router.put('/editPublication/:id', isAuthorized, publicationController.editPublication)
 router.post('/likePublication', isAuthorized, publicationController.likePublication)
 router.post('/createFolder', isAuthorized, publicationController.createFolder)
 router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)

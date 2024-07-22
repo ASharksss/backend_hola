@@ -87,6 +87,7 @@ class PublicationController {
           typeFileId: 4,
           userId,
           approve: false,
+          url: `/static/${coverName}`
         })
       }
 
@@ -120,6 +121,7 @@ class PublicationController {
               typeFileId: 2,
               userId,
               approve: false,
+              url: `/static/${fileName}`
             });
 
             await Publication_block.create({
@@ -161,6 +163,143 @@ class PublicationController {
           userId: i, notification_text: notificationText, typeNotificationId: 1
         })
       }
+      return res.json(notificationText);
+    } catch (e) {
+      console.error("Ошибка:", e); // Отладочное сообщение
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async editPublication(req, res) {
+    try {
+      const userId = req.userId;
+      const publicationId = req.params.id; // Предполагаем, что ID публикации передается как параметр маршрута
+      const {
+        title, description, price,
+        ageLimitId, tags,
+        blocks, groupTags, creativeTags,
+      } = req.body;
+      const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
+      const cover = req.files?.cover;
+      let coverName = null;
+
+      // Найти существующую публикацию
+      const publication = await Publication.findOne({where: {id: publicationId, userId}});
+      if (!publication) {
+        return res.status(404).json({error: 'Публикация не найдена'});
+      }
+
+      // Удаление старой обложки, если новая обложка предоставлена
+      if (cover) {
+        const coverTypeFile = cover.name.split('.').pop();
+        if (coverTypeFile !== 'jpeg' && coverTypeFile !== 'png' && coverTypeFile !== 'jpg') {
+          return res.json('Неподходящее расширение файла для обложки');
+        }
+        if (publication.coverUrl) {
+          let oldCover = publication.coverUrl.replace('/static/', '');
+          const oldCoverPath = path.resolve(__dirname, '..', 'static', oldCover);
+          console.log(oldCoverPath)
+          fs.unlinkSync(oldCoverPath);
+          await File.destroy({where: {name: oldCover}});
+        }
+        coverName = `${uuidv4()}.${coverTypeFile}`;
+        await cover.mv(path.resolve(__dirname, '..', 'static', coverName));
+        await File.create({
+          name: coverName,
+          typeFileId: 4,
+          userId,
+          approve: false,
+          url: `/static/${coverName}`
+        });
+      }
+
+      // Удаление старых файлов и блоков
+      const oldBlocks = await Publication_block.findAll({where: {publicationId}});
+      for (const block of oldBlocks) {
+        if (block.fileId) {
+          const file = await File.findOne({where: {id: block.fileId}});
+          const filePath = path.resolve(__dirname, '..', 'static', file.name);
+          fs.unlinkSync(filePath);
+          await file.destroy();
+        }
+        await block.destroy();
+      }
+
+      // Обновление публикации
+      await publication.update({
+        title,
+        description,
+        price,
+        ageLimitId,
+        coverUrl: coverName ? `/static/${coverName}` : publication.coverUrl,
+      });
+
+      // Удаление старых тегов
+      await Publication_tag.destroy({where: {publicationId: publication.id}});
+
+      // Сохранение новых тегов
+      const parsedTags = JSON.parse(tags);
+      for (const tag of parsedTags) {
+        await Publication_tag.create({creativeTagId: tag, publicationId: publication.id});
+      }
+
+      // Сохранение новых блоков контента
+      const blockArray = JSON.parse(blocks);
+      for (const block of blockArray) {
+        if (block.type === 'file') {
+          const item = files.find(file => file.name === block.content);
+          if (item) {
+            const typeFile = item.name.split('.').pop();
+            const fileName = `${uuidv4()}.${typeFile}`;
+
+            await item.mv(path.resolve(__dirname, '..', 'static', fileName));
+
+            const file = await File.create({
+              name: fileName,
+              typeFileId: 2,
+              userId,
+              approve: false,
+              url: `/static/${fileName}`
+            });
+
+            await Publication_block.create({
+              type: block.type,
+              text: null,
+              fileId: file.id,
+              publicationId: publication.id,
+            });
+
+          } else {
+            console.log("Файл не найден для блока:", block.content); // Отладочное сообщение
+          }
+        } else if (block.type === 'text') {
+          await Publication_block.create({
+            type: block.type,
+            text: block.content,
+            fileId: null,
+            publicationId: publication.id,
+          });
+        }
+      }
+
+      // Получение подписчиков автора
+      const subscribers = await Subscription.findAll({where: {authorId: userId}});
+      const subscribersIds = subscribers.map(item => item.userId);
+      const nickname = await User.findOne({where: {id: userId}, attributes: ['nickname']});
+      let notificationText;
+
+      // Отправка уведомлений подписчикам
+      for (let i of subscribersIds) {
+        const textTemplate = await Type_notification.findOne({where: {id: 1}});
+        notificationText = textTemplate.text.replace('{nickname}', nickname.nickname).replace('{title}', publication.title);
+
+        await Notification.create({
+          userId: i,
+          notification_text: notificationText,
+          typeNotificationId: 1
+        });
+      }
+
       return res.json(notificationText);
     } catch (e) {
       console.error("Ошибка:", e); // Отладочное сообщение
@@ -467,7 +606,7 @@ class PublicationController {
         })
       }
       const publicationData = publication.toJSON();
-      if (publication ) {
+      if (publication) {
         const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})
         if (created) {
           // Если запись была создана, увеличиваем views в таблице Publication
@@ -476,7 +615,7 @@ class PublicationController {
             await publication.increment('views_count');
           }
         }
-        if (isAvialable){
+        if (isAvialable) {
           // Преобразование данных для включения полного пути к файлам
           publicationData.publication_blocks = publicationData.publication_blocks.map(block => {
             if (block.file) {
@@ -737,7 +876,7 @@ class PublicationController {
             [Op.in]: similarPublicationIds
           }
         },
-        attributes: ['id', 'title', 'price', 'views_count', 'coverUrl', 'createdAt', 'date_of_delete', ]
+        attributes: ['id', 'title', 'price', 'views_count', 'coverUrl', 'createdAt', 'date_of_delete',]
       })
       return res.json(similarPublication)
     } catch (e) {
