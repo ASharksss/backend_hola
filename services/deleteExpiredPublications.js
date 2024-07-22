@@ -142,7 +142,7 @@ const deleteExpiredPublications = async () => {
   }
 };
 
-// Запускаем задачу каждый день в 10:46
+// Запускаем задачу каждый день в 00.00
 cron.schedule('00 00 * * *', deleteExpiredPublications);
 
 module.exports = deleteExpiredPublications;

@@ -8,6 +8,7 @@ const router = require("./routes");
 const sequelize = require("./db");
 const models = require('./models/models')
 const deleteExpiredPublications = require("./services/deleteExpiredPublications");
+const deleteNotifications = require("./services/deleteNotifications");
 const port = process.env.PORT
 const originAccess = process.env.originAccess || '["http://localhost:3000"]'
 
@@ -39,3 +40,4 @@ const start = async () => {
 start();
 
 deleteExpiredPublications();
+deleteNotifications();
