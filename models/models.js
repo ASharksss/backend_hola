@@ -130,6 +130,19 @@ const Finance_report = sequelize.define('finance_report', {
   end_billing_period: {type: DataTypes.DATE}
 })
 
+const Reason_for_complaint = sequelize.define('reason_for_complaint', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  name: {type: DataTypes.STRING}
+})
+
+const Complaint_about_publication = sequelize.define('complaint_about_publication', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
+const Complaint_about_comment = sequelize.define('complaint_about_comment', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
 const Report_transaction = sequelize.define('report_transaction', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
@@ -180,6 +193,22 @@ const Folder_tag = sequelize.define('folder_tag', {
 
 
 //Relationships
+
+//Прикрепление причины к жалобе
+Reason_for_complaint.hasMany(Complaint_about_publication)
+Complaint_about_publication.belongsTo(Reason_for_complaint)
+
+//Прикрепление публикации к жалобе
+Publication.hasMany(Complaint_about_publication)
+Complaint_about_publication.belongsTo(Publication)
+
+//Прикрепление причины к жалобе
+Reason_for_complaint.hasMany(Complaint_about_comment)
+Complaint_about_comment.belongsTo(Reason_for_complaint)
+
+//Прикрепление публикации к жалобе
+Comment.hasMany(Complaint_about_comment)
+Complaint_about_comment.belongsTo(Comment)
 
 //Прикрепление транзакции к аналитике
 Transaction.hasMany(Report_transaction)
@@ -374,8 +403,8 @@ module.exports = {
   Status_of_publication,
   Type_file,
   File,
-  Publication_views,
-  Publication_buy, Folder_tag, Basket, Transaction, Wallet,
+  Publication_views, Reason_for_complaint,
+  Publication_buy, Folder_tag, Basket, Transaction, Wallet,Complaint_about_publication, Complaint_about_comment,
   Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia, Notification, Type_notification,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }

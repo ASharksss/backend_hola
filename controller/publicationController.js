@@ -22,7 +22,7 @@ const {
   Group_tag,
   Publication_block,
   Subscription,
-  Type_notification,
+  Type_notification, Complaint_about_publication,
   Notification, Basket, Publication_views, Transaction, Wallet
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
@@ -879,6 +879,18 @@ class PublicationController {
         attributes: ['id', 'title', 'price', 'views_count', 'coverUrl', 'createdAt', 'date_of_delete',]
       })
       return res.json(similarPublication)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async reportPublication(req, res) {
+    try {
+      const {publicationId, reasonForComplaintId} = req.body
+      const complaint = await Complaint_about_publication.create({
+        reasonForComplaintId, publicationId
+      })
+      return res.json(complaint)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }

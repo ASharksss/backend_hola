@@ -1,4 +1,4 @@
-const {Comment, Comment_likes, Notification, Type_notification} = require("../models/models");
+const {Comment, Comment_likes, Notification, Type_notification, Complaint_about_comment} = require("../models/models");
 
 class CommentController {
   async commentPublication(req, res) {
@@ -47,6 +47,18 @@ class CommentController {
       return res.json(commentLike)
     } catch (e) {
       return res.json(e.message)
+    }
+  }
+
+  async reportComment(req, res) {
+    try {
+      const {commentId, reasonForComplaintId} = req.body
+      const complaint = await Complaint_about_comment.create({
+        reasonForComplaintId, commentId
+      })
+      return res.json(complaint)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
     }
   }
 }

@@ -4,7 +4,8 @@ const {
   Subscription,
   UsersSocialMedia,
   User, File,
-  Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag, Creative_tag, Group_tag
+  Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag, Creative_tag, Group_tag,
+  Complaint_about_publication, Complaint_about_comment
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
@@ -527,6 +528,8 @@ class UserController {
       return res.status(500).json({error: e.message})
     }
   }
+
+
 }
 
 module.exports = new UserController()
