@@ -28,7 +28,8 @@ const User = sequelize.define('user', {
   sex: {type: DataTypes.STRING},
   password: {type: DataTypes.STRING},
   email: {type: DataTypes.STRING},
-  aboutMe: {type: DataTypes.STRING}
+  aboutMe: {type: DataTypes.STRING},
+  count_subscribers: {type: DataTypes.INTEGER, defaultValue: 0}
 })
 
 //Подписки

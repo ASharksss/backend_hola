@@ -29,9 +29,13 @@ class UserController {
           notification_text,
           typeNotificationId: 5
         })
+        // Увеличиваем счетчик подписчиков
+        await User.increment('count_subscribers', {by: 1, where: {id: authorId}});
         return res.json(candidate)
       } else {
         await Subscription.destroy({where: {userId, authorId}})
+        // Уменьшаем счетчик подписчиков
+        await User.decrement('count_subscribers', {by: 1, where: {id: authorId}});
       }
       return res.json(candidate)
     } catch (e) {
@@ -358,7 +362,7 @@ class UserController {
               model: Publication_buy, //Для проверки доступности публикации
               where: {userId}, //Фильтр по текущему пользователя
               attributes: ['userId', 'publicationId'],
-              required: false //Разрешаем LEFT JOIN,чтобы включить все публикации
+              required: false //Разрешаем LEFT JOIN, чтобы включить все публикации
             }
           ]
         })
@@ -385,7 +389,7 @@ class UserController {
       });
 
       const user = await User.findByPk(userId, {
-        attributes: ['nickname']
+        attributes: ['nickname', 'count_subscribers']
       })
       //Получение аватарки
       const avatar = await File.findOne({where: {userId, typeFileId: 3}})
@@ -397,11 +401,7 @@ class UserController {
       if (cover) {
         coverUrl = cover.url = `/static/${cover?.name}`
       }
-      //Получение количества подписчиков
-      let subscribersCount = await Subscription.count({where: {authorId: userId}})
-      if (subscribersCount === 0) {
-        subscribersCount = 'Нет подписчиков'
-      }
+
       //Получение социальный сетей
       let socialMedia = await UsersSocialMedia.findAll({
         attributes: ['text'],
@@ -410,18 +410,18 @@ class UserController {
       })
 
       if (avatar && !cover) {
-        return res.json({user, avatarUrl, subscribersCount, socialMedia, publications})
+        return res.json({user, avatarUrl, socialMedia, publications})
       }
       if (!avatar && cover) {
-        return res.json({user, coverUrl, subscribersCount, socialMedia, publications})
+        return res.json({user, coverUrl, socialMedia, publications})
       }
       if (!avatar && !cover) {
-        return res.json({user, subscribersCount, socialMedia, publications})
+        return res.json({user, socialMedia, publications})
       }
       if (avatar && cover) {
-        return res.json({user, avatarUrl, coverUrl, subscribersCount, socialMedia, publications})
+        return res.json({user, avatarUrl, coverUrl, socialMedia, publications})
       }
-      return res.json(user, subscribersCount, socialMedia)
+      return res.json(user, socialMedia)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }
@@ -498,14 +498,31 @@ class UserController {
     }
   }
 
-  async getSimilarAuthors(req, res) {
+  async getRecommendedAuthors(req, res) {
     try {
       const userId = req.userId
       const userInterests = await User_interest.findAll({
         where: {userId}
       })
-
-      return res.json(userInterests)
+      const userInterestsIds = userInterests.map(item => item.creativeTagId)
+      const author_tags = await Author_tag.findAll({
+        where: {
+          creativeTagId: {
+            [Op.in]: userInterestsIds
+          }
+        }
+      })
+      const similarAuthorsIds = author_tags.map(item => item.userId)
+        .filter((value, index, self) => self.indexOf(value) === index);//Удаление дублей в массиве
+      const similarAuthors = await User.findAll({
+        where: {
+          id: {
+            [Op.in]: similarAuthorsIds
+          }
+        },
+        attributes: ['id', 'nickname', 'aboutMe', 'count_subscribers']
+      })
+      return res.json(similarAuthors)
     } catch (e) {
       return res.status(500).json({error: e.message})
     }

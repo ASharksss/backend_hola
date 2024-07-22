@@ -19,7 +19,7 @@ router.get('/getNotifications', isAuthorized, userController.getNotifications)
 router.get('/getNotificationCount', isAuthorized, userController.getNotificationCount)
 router.get('/getUserInterests', isAuthorized, userController.getUserInterests)
 router.get('/getAuthorTags', isAuthorized, userController.getAuthorTags)
-router.get('/getSimilarAuthors', isAuthorized, userController.getSimilarAuthors)
+router.get('/getRecommendedAuthors', isAuthorized, userController.getRecommendedAuthors)
 router.put('/updateUser', isAuthorized, userController.updateUser)
 
 module.exports = router
