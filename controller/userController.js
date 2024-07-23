@@ -433,13 +433,32 @@ class UserController {
       const userId = req.userId
       const user = req.user
       let newUser
-      console.log(user)
       const {nickname, aboutMe, date_of_birth, sex, newPassword, oldPassword, socialMedia} = req.body
-      let checkPassword = bcrypt.compareSync(oldPassword, user.password)
-      if (checkPassword) {
-        const hashPassword = await bcrypt.hash(newPassword, 10)
+      if (newPassword) {
+        let checkPassword = bcrypt.compareSync(oldPassword, user.password)
+        if (checkPassword) {
+          const hashPassword = await bcrypt.hash(newPassword, 10)
+          newUser = await User.update(
+            {nickname, aboutMe, date_of_birth, sex, password: hashPassword},
+            {where: {id: userId}}
+          )
+          if (socialMedia && socialMedia.length > 0) {
+            for (let item of socialMedia) {
+              let check = await UsersSocialMedia.findOne({where: {socialMediumId: item.socialMediumId, userId}})
+              if (check) {
+                await UsersSocialMedia.update(
+                  {socialMediumId: item.socialMediumId, text: item.text},
+                  {where: {userId}}
+                );
+              } else {
+                await UsersSocialMedia.create({socialMediumId: item.socialMediumId, text: item.text, userId})
+              }
+            }
+          }
+        }
+      } else {
         newUser = await User.update(
-          {nickname, aboutMe, date_of_birth, sex, password: hashPassword},
+          {nickname, aboutMe, date_of_birth, sex},
           {where: {id: userId}}
         )
         if (socialMedia && socialMedia.length > 0) {
@@ -456,6 +475,7 @@ class UserController {
           }
         }
       }
+
 
       return res.json(newUser)
     } catch (e) {

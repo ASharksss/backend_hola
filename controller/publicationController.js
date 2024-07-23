@@ -720,10 +720,47 @@ class PublicationController {
     }
   }
 
+  async editFolder(req, res) {
+    try {
+      const {folderOfPublicationId, name, description} = req.body
+      const updateFolder = await Folder_of_publication.update({name, description}, {where: {id: folderOfPublicationId}})
+      return res.json(updateFolder)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async deleteFolder(req, res) {
+    try {
+      const {id} = req.body
+      const folder = await Folder_of_publication.findByPk(id)
+      if (folder) {
+        await Storage_publication.destroy({where: {folderOfPublicationId: id}})
+        await Folder_of_publication.destroy({where: {id}})
+        return res.json('Плейлист удален')
+      } else {
+        return res.json('Плейлист не найден')
+      }
+
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
   async putPublicationInFolder(req, res) {
     try {
       const {publicationId, folderOfPublicationId} = req.body
-      const storage = await Storage_publication.create({publicationId, folderOfPublicationId})
+      const storage = await Storage_publication.findOrCreate({where: {publicationId, folderOfPublicationId}})
+      return res.json(storage)
+    } catch (e) {
+      return res.status(500).json({error: e.message});
+    }
+  }
+
+  async deletePublicationInFolder(req, res) {
+    try {
+      const {publicationId, folderOfPublicationId} = req.body
+      const storage = await Storage_publication.destroy({where: {publicationId, folderOfPublicationId}})
       return res.json(storage)
     } catch (e) {
       return res.status(500).json({error: e.message});
