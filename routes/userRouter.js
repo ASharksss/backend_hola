@@ -10,6 +10,7 @@ router.post('/createUsersSocialMedia', isAuthorized, userController.createUsersS
 router.post('/createAboutMe', isAuthorized, userController.createAboutMe)
 router.post('/takeAvatar', isAuthorized, userController.takeAvatar)
 router.post('/takeCover', isAuthorized, userController.takeCover)
+router.post('/toggleNotifications', isAuthorized, userController.toggleNotifications)
 router.get('/getAvatar', isAuthorized, userController.getAvatar)
 router.get('/getProfileCover', isAuthorized, userController.getProfileCover)
 router.get('/getSubscribers', isAuthorized, userController.getSubscribers)
@@ -20,6 +21,7 @@ router.get('/getNotificationCount', isAuthorized, userController.getNotification
 router.get('/getUserInterests', isAuthorized, userController.getUserInterests)
 router.get('/getAuthorTags', isAuthorized, userController.getAuthorTags)
 router.get('/getRecommendedAuthors', isAuthorized, userController.getRecommendedAuthors)
+router.get('/getReasonForComplaint', isAuthorized, userController.getReasonForComplaint)
 router.put('/updateUser', isAuthorized, userController.updateUser)
 
 module.exports = router

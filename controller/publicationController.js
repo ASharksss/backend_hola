@@ -650,7 +650,7 @@ class PublicationController {
             where: {id: publicationId}
           }
         )
-
+        //Отправка уведомления
         const subscribers = await Subscription.findAll({where: {authorId: userId}})
         const subscribersIds = subscribers.map(item => item.userId)
         let templateText = await Type_notification.findOne({where: {id: 6}})
@@ -658,9 +658,7 @@ class PublicationController {
           let notification_text = templateText.text.replace('{nickname}', author.nickname).replace('{title}', publication.title)
           await Notification.create({userId: item, notification_text, typeNotificationId: 6})
         }
-
       }
-
       return res.json(publication)
     } catch (e) {
       return res.status(500).json({error: e.message});

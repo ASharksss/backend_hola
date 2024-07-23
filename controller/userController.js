@@ -5,7 +5,7 @@ const {
   UsersSocialMedia,
   User, File,
   Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag, Creative_tag, Group_tag,
-  Complaint_about_publication, Complaint_about_comment
+  Complaint_about_publication, Complaint_about_comment, Reason_for_complaint
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
@@ -529,6 +529,37 @@ class UserController {
     }
   }
 
+  async getReasonForComplaint(req, res) {
+    try {
+      const reasons = await Reason_for_complaint.findAll({
+        attributes: ['id', 'name']
+      })
+      return res.json(reasons)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async toggleNotifications(req, res) {
+    try {
+      const {subscriptionId} = req.body
+      // Найти запись по ID подписки
+      const subscription = await Subscription.findByPk(subscriptionId, {
+        include: {model: User, as: 'author'}
+      })
+
+      if (!subscription) {
+        return res.json('Подписка не найдена');
+      }
+      // Переключить значение onNotification
+      subscription.onNotification = !subscription.onNotification;
+      // Сохранить изменения
+      await subscription.save();
+      return res.json(`Уведомления от ${subscription.author.nickname} ${subscription.onNotification ? 'включены' : 'выключены'}`);
+    } catch (e) {
+      return res.status(500).json('Ошибка при переключении уведомлений подписки:', e);
+    }
+  }
 
 }
 

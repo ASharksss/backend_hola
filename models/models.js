@@ -34,7 +34,8 @@ const User = sequelize.define('user', {
 
 //Подписки
 const Subscription = sequelize.define('subscription', {
-  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+  onNotification: {type: DataTypes.BOOLEAN, defaultValue: true}
 })
 
 //Публикации
@@ -377,7 +378,7 @@ Folder_tag.belongsTo(Creative_tag)
 Folder_of_publication.hasMany(Folder_tag)
 Folder_tag.belongsTo(Folder_of_publication)
 
-//Привязка социаьный сетей к пользователю
+//Привязка социальных сетей к пользователю
 SocialMedia.hasMany(UsersSocialMedia)
 UsersSocialMedia.belongsTo(SocialMedia)
 
