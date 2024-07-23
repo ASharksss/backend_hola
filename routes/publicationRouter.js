@@ -12,6 +12,7 @@ router.post('/putPublicationInFolder', isAuthorized, publicationController.putPu
 router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
 router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket)
 router.post('/reportPublication', isAuthorized, publicationController.reportPublication)
+router.post('/addToFavorites', isAuthorized, publicationController.addToFavorites)
 router.get('/getUserPublications', isAuthorized, publicationController.getUserPublications)
 router.get('/getPublication/:id', isAuthorized, publicationController.getPublication)
 router.get('/getPublicationsInFolder', isAuthorized, publicationController.getPublicationsInFolder)

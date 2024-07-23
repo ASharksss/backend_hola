@@ -136,6 +136,10 @@ const Reason_for_complaint = sequelize.define('reason_for_complaint', {
   name: {type: DataTypes.STRING}
 })
 
+const Favorites = sequelize.define('favorites', {
+  id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
+})
+
 const Complaint_about_publication = sequelize.define('complaint_about_publication', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true}
 })
@@ -194,6 +198,14 @@ const Folder_tag = sequelize.define('folder_tag', {
 
 
 //Relationships
+
+//Прикрепление публикации к избранному
+Publication.hasMany(Favorites)
+Favorites.belongsTo(Publication)
+
+//Прикрепление пользователя к избранному
+User.hasMany(Favorites)
+Favorites.belongsTo(User)
 
 //Прикрепление причины к жалобе
 Reason_for_complaint.hasMany(Complaint_about_publication)
@@ -371,7 +383,7 @@ Publication_likes.belongsTo(Publication)
 User.hasMany(Publication_likes)
 Publication_likes.belongsTo(User)
 
-//Привязка тжгов к папкам
+//Привязка тэгов к папкам
 Creative_tag.hasMany(Folder_tag)
 Folder_tag.belongsTo(Creative_tag)
 
@@ -404,8 +416,8 @@ module.exports = {
   Status_of_publication,
   Type_file,
   File,
-  Publication_views, Reason_for_complaint,
-  Publication_buy, Folder_tag, Basket, Transaction, Wallet,Complaint_about_publication, Complaint_about_comment,
+  Publication_views, Reason_for_complaint, Favorites,
+  Publication_buy, Folder_tag, Basket, Transaction, Wallet, Complaint_about_publication, Complaint_about_comment,
   Storage_publication, Comment, Folder_of_publication, SocialMedia, UsersSocialMedia, Notification, Type_notification,
   Publication_likes, Author_tag, User_interest, Attachment, Comment_likes, Publication_tag, Publication_block
 }

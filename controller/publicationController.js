@@ -23,7 +23,7 @@ const {
   Publication_block,
   Subscription,
   Type_notification, Complaint_about_publication,
-  Notification, Basket, Publication_views, Transaction, Wallet
+  Notification, Basket, Publication_views, Transaction, Wallet, Favorites
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
 const {Op, Sequelize} = require("sequelize");
@@ -145,7 +145,7 @@ class PublicationController {
       }
       //Получаем подписчиков автора
       const subscribers = await Subscription.findAll({
-        where: {authorId: userId},
+        where: {authorId: userId, onNotification: true},
       })
       //Получаем ids подписчиков
       let subscribersIds = subscribers.map(item => item.userId)
@@ -651,7 +651,7 @@ class PublicationController {
           }
         )
         //Отправка уведомления
-        const subscribers = await Subscription.findAll({where: {authorId: userId}})
+        const subscribers = await Subscription.findAll({where: {authorId: userId, onNotification: true}})
         const subscribersIds = subscribers.map(item => item.userId)
         let templateText = await Type_notification.findOne({where: {id: 6}})
         for (let item of subscribersIds) {
@@ -889,6 +889,25 @@ class PublicationController {
         reasonForComplaintId, publicationId
       })
       return res.json(complaint)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async addToFavorites(req, res) {
+    try {
+      const userId = req.userId
+      const {publicationId} = req.body
+      const [favoriteItem, created] = await Favorites.findOrCreate({
+        where: {publicationId, userId}
+      })
+      if (created) {
+        return res.json({favoriteItem, created})
+      } else {
+        await Favorites.destroy({where: {publicationId, userId}})
+        return res.json({favoriteItem, created})
+      }
+
     } catch (e) {
       return res.status(500).json({error: e.message})
     }
