@@ -387,7 +387,32 @@ class PublicationController {
 
           break;
         case 'subscriptions':
-
+          let subscriptions = await Subscription.findAll({where: {userId}})
+          let authorsIds = await subscriptions.map(item => item.authorId)
+          publications = await Publication.findAll({
+            where: {
+              userId: {
+                [Op.in]: authorsIds
+              }
+            },
+            order: [
+              ['createdAt', 'DESC']
+            ],
+            include: [
+              {
+                model: Publication_buy,
+                where: {userId},
+                attributes: ['userId', 'publicationId'],
+                required: false
+              }
+            ]
+          })
+          publications = publications.map(publication => {
+            let plainPublication = publication.toJSON(); // Преобразуем в plain object
+            // Проверяем наличие покупок
+            plainPublication.isAvialable = plainPublication.publication_buys.length > 0 || plainPublication.price === 0;
+            return plainPublication;
+          });
           break;
         case 'likes':
           //Вызов лайкнутых пользователем публикации
