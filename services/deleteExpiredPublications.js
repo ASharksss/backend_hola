@@ -1,9 +1,11 @@
 const {
   Publication, Publication_tag, Publication_likes, Attachment, File, Comment, Comment_likes,
-  Publication_buy, Publication_views, Storage_publication
+  Publication_buy, Publication_views, Storage_publication, Publication_block
 } = require('../models/models');
 const { Op } = require('sequelize');
 const cron = require('node-cron');
+const path = require("path");
+const fs = require("fs");
 
 const deleteExpiredPublications = async () => {
   try {
@@ -98,7 +100,7 @@ const deleteExpiredPublications = async () => {
     });
 
     // Находим все attachments, связанные с просроченными публикациями
-    const attachments = await Attachment.findAll({
+    const blocks = await Publication_block.findAll({
       where: {
         publicationId: {
           [Op.in]: publicationIds
@@ -107,16 +109,48 @@ const deleteExpiredPublications = async () => {
     });
 
     // Получаем IDs файлов, связанных с attachments
-    const fileIds = attachments.map(att => att.fileId);
+    const fileIds = blocks.map(att => att.fileId);
 
     // Удаляем записи из Attachment
-    await Attachment.destroy({
+    await Publication_block.destroy({
       where: {
         publicationId: {
           [Op.in]: publicationIds
         }
       }
     });
+
+    const files = await File.findAll({
+      where: {
+        id: {
+          [Op.in]: fileIds
+        }
+      },
+      attributes: ['name'],
+      raw: true
+    })
+
+    const covers = await Publication.findAll({
+      where: {
+        id: {
+          [Op.in]: publicationIds
+        }
+      },
+      attributes: ['coverUrl'],
+      raw: true
+    });
+
+    await Promise.all(files.map(async (file) => {
+      const filePath = path.resolve(__dirname, '..', 'static', file.name);
+      fs.unlinkSync(filePath);
+    }))
+
+    await Promise.all(covers.map(async (cover) => {
+      let coverName = cover.coverUrl.replace('/static/', '');
+      const coverPath = path.resolve(__dirname, '..', 'static', coverName);
+      fs.unlinkSync(coverPath);
+      await File.destroy({where: {name: coverName}});
+    }))
 
     // Удаляем записи из File
     await File.destroy({
@@ -143,6 +177,6 @@ const deleteExpiredPublications = async () => {
 };
 
 // Запускаем задачу каждый день в 00.00
-cron.schedule('00 00 * * *', deleteExpiredPublications);
+cron.schedule('41 14 * * *', deleteExpiredPublications);
 
 module.exports = deleteExpiredPublications;
