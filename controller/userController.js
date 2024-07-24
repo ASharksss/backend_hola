@@ -11,7 +11,8 @@ const {v4: uuidv4} = require("uuid");
 const path = require("path");
 const {Op, where} = require("sequelize");
 const bcrypt = require("bcrypt");
-
+const fs = require('fs');
+const handlebars = require('handlebars')
 class UserController {
 
   async subscribe(req, res) {
@@ -576,6 +577,28 @@ class UserController {
       return res.json(`Уведомления от ${subscription.author.nickname} ${subscription.onNotification ? 'включены' : 'выключены'}`);
     } catch (e) {
       return res.status(500).json('Ошибка при переключении уведомлений подписки:', e);
+    }
+  }
+
+  async createContract(req, res) {
+    try {
+      const {
+        name, surname, patronymic,
+        series, number, insuranceNumber,
+        inn, kpp, ogrn, contractNumber,
+        typeUser
+      } = req.body
+      let legalContract = fs.readFileSync('static/templates/legalContract.docx', 'utf8');
+      let personContract = fs.readFileSync('static/templates/personContract.docx', 'utf8');
+      if (typeUser === 'legalEntity') {
+
+      }
+      if (typeUser === 'person') {
+
+      }
+
+    } catch (e) {
+      return res.status(500).json({error: e.message})
     }
   }
 
