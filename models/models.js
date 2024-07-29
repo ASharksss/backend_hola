@@ -73,7 +73,7 @@ const Type_file = sequelize.define('type_file', {
   name: {type: DataTypes.STRING}
 })
 //Файлы
-const File = sequelize.define('file', {
+const  File = sequelize.define('file', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
   approve: {type: DataTypes.BOOLEAN},
@@ -235,6 +235,10 @@ Complaint_about_comment.belongsTo(Reason_for_complaint)
 //Прикрепление публикации к жалобе
 Comment.hasMany(Complaint_about_comment)
 Complaint_about_comment.belongsTo(Comment)
+
+//Прикрепление пользователя к транзакции
+User.hasMany(Transaction)
+Transaction.belongsTo(User)
 
 //Прикрепление транзакции к аналитике
 Transaction.hasMany(Report_transaction)

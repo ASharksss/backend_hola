@@ -827,7 +827,8 @@ class PublicationController {
             purchaseCost: publication.price,
             transferToAuthor: publication.price * (1 - 0.01),
             transferToService: publication.price * (1 - 0.99),
-            walletId: authorWalletId.id
+            walletId: authorWalletId.id,
+            userId
           })
 
           //Обновляем баланс

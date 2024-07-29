@@ -12,7 +12,7 @@ const path = require("path");
 const {Op, where} = require("sequelize");
 const bcrypt = require("bcrypt");
 const fs = require('fs');
-const handlebars = require('handlebars')
+// const handlebars = require('handlebars')
 class UserController {
 
   async subscribe(req, res) {
