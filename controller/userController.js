@@ -12,8 +12,19 @@ const path = require("path");
 const {Op, where} = require("sequelize");
 const bcrypt = require("bcrypt");
 const fs = require('fs');
+const PizZip = require("pizzip");
+const Docxtemplater = require("docxtemplater");
+
 // const handlebars = require('handlebars')
 class UserController {
+
+  constructor() {
+    this.templateDir = path.join(__dirname, '..', 'static', 'templates');
+    this.outputDir = path.join(__dirname, '..', 'static', 'contracts');
+    if (!fs.existsSync(this.outputDir)) {
+      fs.mkdirSync(this.outputDir);
+    }
+  }
 
   async subscribe(req, res) {
     try {
@@ -497,7 +508,7 @@ class UserController {
       // Если найдены непрочитанные уведомления, отмечаем их как прочитанные
       if (notificationIds.length > 0) {
         await Notification.update(
-          {read: true}, // Устанавливаем флаг isRead в true
+          /* {read: true},*/ // Устанавливаем флаг isRead в true
           {where: {id: notificationIds}} // Обновляем только уведомления с указанными идентификаторами
         );
       }
@@ -580,28 +591,60 @@ class UserController {
     }
   }
 
-  async createContract(req, res) {
+  createContract = async (req, res) => {
     try {
       const {
         name, surname, patronymic,
         series, number, insuranceNumber,
-        inn, kpp, ogrn, contractNumber,
-        typeUser
-      } = req.body
-      let legalContract = fs.readFileSync('static/templates/legalContract.docx', 'utf8');
-      let personContract = fs.readFileSync('static/templates/personContract.docx', 'utf8');
-      if (typeUser === 'legalEntity') {
+        inn, kpp, ogrn
+      } = req.body;
 
-      }
-      if (typeUser === 'person') {
+      // Чтение содержимого шаблона документа
+      const templatePath = path.join(this.templateDir, 'legalContract.docx');
+      const templateContent = fs.readFileSync(templatePath, 'binary');
 
-      }
+      // Инициализация PizZip и Docxtemplater с шаблоном
+      const zip = new PizZip(templateContent);
+      const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+      });
+
+      // Вставка значений в документ
+      doc.setData({
+        name
+      });
+
+      // Обработка документа (вставка значений)
+      doc.render();
+
+      // Генерация изменённого документа
+      const buf = doc.getZip().generate({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+      });
+
+      // Создание уникального имени файла на основе текущей даты и времени
+      const outputFilename = `contract_${Date.now()}.docx`;
+      const outputPath = path.join(this.outputDir, outputFilename);
+
+      // Сохранение файла на сервере
+      fs.writeFileSync(outputPath, buf);
+
+      // Установка заголовков для скачивания файла
+      res.set({
+        'Content-Disposition': `attachment; filename=${outputFilename}`,
+        'Content-Type': `application/vnd.openxmlformats-officedocument.wordprocessingml.document`,
+      });
+
+      // Отправка файла клиенту
+      res.sendFile(outputPath);
 
     } catch (e) {
-      return res.status(500).json({error: e.message})
+      console.log(e)
+      return res.status(500).json({error: e.message});
     }
   }
-
 }
 
 module.exports = new UserController()
