@@ -5,7 +5,7 @@ const {
   UsersSocialMedia,
   User, File,
   Type_notification, Notification, SocialMedia, Publication, Publication_buy, Publication_tag, Creative_tag, Group_tag,
-  Complaint_about_publication, Complaint_about_comment, Reason_for_complaint
+  Complaint_about_publication, Complaint_about_comment, Reason_for_complaint, Contract
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
@@ -598,7 +598,7 @@ class UserController {
         series, number, insuranceNumber,
         inn, kpp, ogrn
       } = req.body;
-
+      const userId = req.userId
       // Чтение содержимого шаблона документа
       const templatePath = path.join(this.templateDir, 'legalContract.docx');
       const templateContent = fs.readFileSync(templatePath, 'binary');
@@ -631,6 +631,12 @@ class UserController {
       // Сохранение файла на сервере
       fs.writeFileSync(outputPath, buf);
 
+      // Запись данных в бд
+      await Contract.create({
+        name: outputFilename,
+        userId
+      })
+
       // Установка заголовков для скачивания файла
       res.set({
         'Content-Disposition': `attachment; filename=${outputFilename}`,
@@ -643,6 +649,20 @@ class UserController {
     } catch (e) {
       console.log(e)
       return res.status(500).json({error: e.message});
+    }
+  }
+
+  async getContract(req, res) {
+    try {
+      const userId = req.userId
+      const contract = await Contract.findOne({where: {userId}})
+      if (!contract) {
+        res.json('Нет договоров')
+      }
+      contract.dataValues.downloadUrl = `/static/contracts/${contract.name}`
+      res.json(contract)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
     }
   }
 }
