@@ -732,7 +732,7 @@ class PublicationController {
 
   async deleteFolder(req, res) {
     try {
-      const {id} = req.body
+      const {id} = req.params
       const folder = await Folder_of_publication.findByPk(id)
       if (folder) {
         await Storage_publication.destroy({where: {folderOfPublicationId: id}})

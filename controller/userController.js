@@ -577,8 +577,8 @@ class UserController {
       const subscription = await Subscription.findByPk(subscriptionId, {
         include: {model: User, as: 'author'}
       })
-
-      if (!subscription) {
+      // console.log(subscriptionId)
+      if (!subscription) {  
         return res.json('Подписка не найдена');
       }
       // Переключить значение onNotification

@@ -22,7 +22,7 @@ router.get('/getMainPublications', isAuthorized, publicationController.getMainPu
 router.get('/getBasket', isAuthorized, publicationController.getBasket)
 router.get('/getSimilarPublications/:id', isAuthorized, publicationController.getSimilarPublications)
 router.delete('/deletePublicationInFolder', isAuthorized, publicationController.deletePublicationInFolder)
-router.delete('/deleteFolder', isAuthorized, publicationController.deleteFolder)
+router.delete('/deleteFolder/:id', isAuthorized, publicationController.deleteFolder)
 
 
 module.exports = router
