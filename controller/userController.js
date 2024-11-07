@@ -402,7 +402,7 @@ class UserController {
       });
 
       const user = await User.findByPk(userId, {
-        attributes: ['nickname', 'count_subscribers']
+        attributes: ['nickname', 'count_subscribers', 'aboutMe']
       })
       //Получение аватарки
       const avatar = await File.findOne({where: {userId, typeFileId: 3}})
@@ -446,6 +446,28 @@ class UserController {
       const user = req.user
       let newUser
       const {nickname, aboutMe, date_of_birth, sex, newPassword, oldPassword, socialMedia} = req.body
+
+      function isSocialMedia(socialMedia){
+        return socialMedia && socialMedia.length > 0
+      }
+
+      async function addSocialMedia(socialID, text, userID) {
+        let [media, created] = await UsersSocialMedia.findOrCreate({
+          where: {
+            userId: userID,
+            socialMediumId: socialID
+          },
+          defaults: {
+            socialMediumId: socialID,
+            text,
+            userId: userID
+          }},
+        )
+        if (!created){
+          await media.update({text})
+          await media.save()
+        }
+      }
       if (newPassword) {
         let checkPassword = bcrypt.compareSync(oldPassword, user.password)
         if (checkPassword) {
@@ -454,39 +476,20 @@ class UserController {
             {nickname, aboutMe, date_of_birth, sex, password: hashPassword},
             {where: {id: userId}}
           )
-          if (socialMedia && socialMedia.length > 0) {
-            for (let item of socialMedia) {
-              let check = await UsersSocialMedia.findOne({where: {socialMediumId: item.socialMediumId, userId}})
-              if (check) {
-                await UsersSocialMedia.update(
-                  {socialMediumId: item.socialMediumId, text: item.text},
-                  {where: {userId}}
-                );
-              } else {
-                await UsersSocialMedia.create({socialMediumId: item.socialMediumId, text: item.text, userId})
-              }
-            }
-          }
         }
       } else {
         newUser = await User.update(
           {nickname, aboutMe, date_of_birth, sex},
           {where: {id: userId}}
         )
-        if (socialMedia && socialMedia.length > 0) {
-          for (let item of socialMedia) {
-            let check = await UsersSocialMedia.findOne({where: {socialMediumId: item.socialMediumId, userId}})
-            if (check) {
-              await UsersSocialMedia.update(
-                {socialMediumId: item.socialMediumId, text: item.text},
-                {where: {userId}}
-              );
-            } else {
-              await UsersSocialMedia.create({socialMediumId: item.socialMediumId, text: item.text, userId})
-            }
-          }
+      }
+
+      if (isSocialMedia) {
+        for (let item of socialMedia) {
+          await addSocialMedia(item.socialMediumId, item.text, userId)
         }
       }
+
       return res.json(newUser)
     } catch (e) {
       return res.status(500).json({error: e.message})
