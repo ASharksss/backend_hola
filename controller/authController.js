@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt')
 const {Op} = require("sequelize");
-const {User, File} = require("../models/models");
+const {User, File, Role, SocialMedia, UsersSocialMedia} = require("../models/models");
 const {refreshToken, generateTokens} = require("../services/utils");
 
 class AuthController {
@@ -9,14 +9,35 @@ class AuthController {
     try {
       const {username, sex, password, email, date_of_birth} = req.body
       const hashPassword = await bcrypt.hash(password, 10)
-      const [user, created] = await User.findOrCreate({
-        where: {
-          [Op.or]: [{ nickname: username }, { email }]
-        },
-        defaults: {
-          nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
-        }
+
+      const CreateNewUser = async () => {
+        const [user, created] = await User.findOrCreate({
+          where: {
+            [Op.or]: [{ nickname: username }, { email }]
+          },
+          defaults: {
+            nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
+          }
+        })
+      }
+      const roleId = await Role.findOne({
+        where: {id: 1}
       })
+
+      if(roleId === null || roleId === undefined) {
+        const newRole = await Role.create({
+          id: 1,
+          name: 'Пользователь'
+        })
+        CreateNewUser()
+      }
+      else {
+        CreateNewUser()
+      }
+
+
+
+
       // Если захотите сделать отправку почты
       // const mailOptions = {
       //   from: EMAIL_USER,
@@ -31,6 +52,7 @@ class AuthController {
       //     console.log('Email sent: ' + info.response);
       //   }
       // });
+
       if (created)
         return res.json(user)
       return res.json({created})
@@ -47,7 +69,11 @@ class AuthController {
       if (email !== undefined) {
         user = await User.findOne({
           where: {email},
-          raw: true
+          include: {
+            model: UsersSocialMedia,
+            attributes: ['text', 'socialMediumId']
+          },
+          // raw: true
         })
       }
       if (user === null) {
@@ -82,6 +108,7 @@ class AuthController {
         user.profileCover = `/static/${profileCover.name}`
       }
 
+
       return res.json({token: accessToken, email: user.email, profile: user});
     } catch (e) {
       console.log(e)
@@ -106,24 +133,25 @@ class AuthController {
   }
 
   async loginToAccessToken(req, res, next) {
-    try {
-      let currentUser = null
-      const cookie = req.cookies
-      const authToken = cookie.refreshToken;
-      if (!authToken) {
-        return res.status(401).json({message: 'Пользователь не авторизован, отсутствует токен'})
-      }
-      jwt.verify(authToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
-        if(err) {
-          return res.status(403).json({message: 'Ощибка доступа'})
-        }
-        currentUser = user
-      })
-      const {accessToken} = await refreshToken(authToken)
-      return res.json({token: accessToken, email: currentUser['user'].email, profile: currentUser['user']})
-    } catch (e) {
-      return res.status(401).json({message: e.message})
-    }
+    // try {
+    //   let currentUser = null
+    //   const cookie = req.cookies
+    //   const authToken = cookie.refreshToken;
+    //   if (!authToken) {
+    //     return res.status(401).json({message: 'Пользователь не авторизован, отсутствует токен'})
+    //   }
+    //   jwt.verify(authToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
+    //     if(err) {
+    //       return res.status(403).json({message: 'Ощибка доступа'})
+    //     }
+    //     currentUser = user
+    //   })
+    //   const {accessToken} = await refreshToken(authToken)
+    //   return res.json({token: accessToken, email: currentUser['user'].email, profile: currentUser['user']})
+    // } catch (e) {
+    //   return res.status(401).json({message: e.message})
+    // }
+    next();
   }
 
 }
