@@ -8,36 +8,16 @@ class AuthController {
   async registration(req, res) {
     try {
       const {username, sex, password, email, date_of_birth} = req.body
+      const errMes = ''
       const hashPassword = await bcrypt.hash(password, 10)
-
-      const CreateNewUser = async () => {
-        const [user, created] = await User.findOrCreate({
-          where: {
-            [Op.or]: [{ nickname: username }, { email }]
-          },
-          defaults: {
-            nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
-          }
-        })
-      }
-      const roleId = await Role.findOne({
-        where: {id: 1}
+      const [user, created] = await User.findOrCreate({
+        where: {
+          [Op.or]: [{ nickname: username }, { email }]
+        },
+        defaults: {
+          nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
+        }
       })
-
-      if(roleId === null || roleId === undefined) {
-        const newRole = await Role.create({
-          id: 1,
-          name: 'Пользователь'
-        })
-        CreateNewUser()
-      }
-      else {
-        CreateNewUser()
-      }
-
-
-
-
       // Если захотите сделать отправку почты
       // const mailOptions = {
       //   from: EMAIL_USER,
@@ -55,7 +35,7 @@ class AuthController {
 
       if (created)
         return res.json(user)
-      return res.json({created})
+      return res.json(created)
     } catch (e) {
       console.log(e)
       return e
@@ -84,8 +64,8 @@ class AuthController {
         return res.status(401).json({message: 'Неверный пароль'})
       }
       const {accessToken, refreshToken} = await generateTokens(user);
-      delete user.password
-      delete user.updatedAt
+      // delete user.password
+      // delete user.updatedAt
       const currentDate = new Date()
       const expiresIn = new Date(new Date().setMonth(currentDate.getMonth() + 1))
       res.cookie('refreshToken', refreshToken, {
@@ -98,18 +78,32 @@ class AuthController {
       let avatar = await File.findOne({
         where: {userId: user.id, typeFileId: 3}
       })
+      //как будто уже и не нужен
       let profileCover = await File.findOne({
         where: {userId: user.id, typeFileId: 1}
       })
-      if (avatar) {
-        user.avatar = `/static/${avatar.name}`
-      }
-      if (profileCover) {
-        user.profileCover = `/static/${profileCover.name}`
-      }
+      // if (avatar) {
+      //   user.avatar = `/static/${avatar.name}`
+      // }
+      // if (profileCover) {
+      //   user.profileCover = `/static/${profileCover.name}`
+      // }
 
+      // Обновил сборку, потому что прошлая не работала, присылала password && не присылала avatar
+      const responseUser = {
+        aboutMe: user.aboutMe,
+        count_subscribers: user.count_subscribers,
+        date_of_birth: user.date_of_birth,
+        email: user.email,
+        id: user.id,
+        nickname: user.nickname,
+        roleId: user.roleId,
+        sex: user.sex,
+        avatar: avatar?.url,
+        usersSocialMedia: user.usersSocialMedia,
+      }
+      return res.json({token: accessToken, email: user.email, profile: responseUser});
 
-      return res.json({token: accessToken, email: user.email, profile: user});
     } catch (e) {
       console.log(e)
       return res.status(401).json({message: e.message})
