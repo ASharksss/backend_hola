@@ -23,7 +23,8 @@ router.get('/getUserInterests', isAuthorized, userController.getUserInterests)
 router.get('/getAuthorTags', isAuthorized, userController.getAuthorTags)
 router.get('/getRecommendedAuthors', isAuthorized, userController.getRecommendedAuthors)
 router.get('/getReasonForComplaint', isAuthorized, userController.getReasonForComplaint)
-router.get('/getContract', isAuthorized, userController.getContract)
+
 router.put('/updateUser', isAuthorized, userController.updateUser)
+router.put('/updatePassword', isAuthorized, userController.updatePassword)
 
 module.exports = router

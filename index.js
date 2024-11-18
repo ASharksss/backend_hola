@@ -19,6 +19,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'x-position'], methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE']
 }))
 
+app.use((req, res, next) => {
+  console.log('Date', new Date().toLocaleString('ru-RU'), 'method', req.method, 'url', req.originalUrl, 'ip', req.ip);
+  next()
+})
+
+
 app.use(cookieParser())
 
 app.use(fileUpload({}))
