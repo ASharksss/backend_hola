@@ -571,7 +571,7 @@ class PublicationController {
           }
           break;
       }
-      return res.json(publications)
+      return res.json(publications.reverse())
     } catch (e) {
       console.log(e)
       return res.status(500).json({error: e.message});
@@ -614,23 +614,39 @@ class PublicationController {
   async getPublication(req, res) {
     try {
       const userId = req.userId
+
       const id = req.params.id
       let publication
+
+      // console.log(user)
 
       let purchase = await Publication_buy.findOne({where: {userId, publicationId: id}})
       publication = await Publication.findOne({
         where: {id}
       })
-      let isAvialable = purchase || publication.price === 0
+      let isAvialable = true
+      // purchase || publication.price === 0
       if (isAvialable) {
         publication = await Publication.findOne({
           where: {id},
-          include: {
+          include: [{
             model: Publication_block, include: {model: File}
-          }
+          }, {
+            model: User,
+            attributes: ['id', 'nickname'],
+          }]
         })
       }
+
+      let avatarUrl
+      const avatar = await File.findOne({where: {userId, typeFileId: 3}})
+      if (avatar) {
+        avatarUrl = `/static/${avatar?.name}`
+      }
+
       const publicationData = publication.toJSON();
+
+      publicationData.user.avatarUrl = avatarUrl
       if (publication) {
         const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})
         if (created) {
@@ -939,7 +955,7 @@ class PublicationController {
         },
         attributes: ['id', 'title', 'price', 'views_count', 'coverUrl', 'createdAt', 'date_of_delete',]
       })
-      return res.json(similarPublication)
+      return res.json(similarPublication.slice(0, 10))
     } catch (e) {
       return res.status(500).json({error: e.message})
     }

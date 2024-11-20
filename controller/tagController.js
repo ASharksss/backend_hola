@@ -38,14 +38,20 @@ class TagController {
   async getCreativeTagByGroup(req, res) {
     try {
       let {groups} = req.query
-      groups = groups.split(',')
-      const tags = await Creative_tag.findAll({
-        where: {
-          groupTagId: {
-            [Op.in]: groups
+      let options = {};
+
+      if(groups !== undefined){
+          groups = groups.split(',')
+          options = {
+            where: {
+              groupTagId: {
+                [Op.in]: groups
+              }
+            }
           }
-        }
-      })
+      }
+
+      const tags = await Creative_tag.findAll(options)
       return res.json(tags)
     } catch (e) {
       return res.status(500).json({error: e.message});
