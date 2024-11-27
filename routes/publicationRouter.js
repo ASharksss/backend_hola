@@ -11,7 +11,7 @@ router.post('/likePublication', isAuthorized, publicationController.likePublicat
 router.post('/createFolder', isAuthorized, publicationController.createFolder)
 router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)
 router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
-router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket)
+router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket) // <------------ POST(PUT) ..Удалить комментарии
 router.post('/reportPublication', isAuthorized, publicationController.reportPublication)
 router.post('/addToFavorites', isAuthorized, publicationController.addToFavorites)
 router.get('/getUserPublications', isAuthorized, publicationController.getUserPublications)
@@ -19,10 +19,12 @@ router.get('/getPublication/:id', isAuthorized, publicationController.getPublica
 router.get('/getPublicationsInFolder', isAuthorized, publicationController.getPublicationsInFolder)
 router.get('/getUserFolders', isAuthorized, publicationController.getUserFolders)
 router.get('/getMainPublications', isAuthorized, publicationController.getMainPublications)
-router.get('/getBasket', isAuthorized, publicationController.getBasket)
+router.get('/getBasket', isAuthorized, publicationController.getBasket) // <-------------------------------------------- GET ..Удалить комментарии
 router.get('/getSimilarPublications/:id', isAuthorized, publicationController.getSimilarPublications)
 router.delete('/deletePublicationInFolder', isAuthorized, publicationController.deletePublicationInFolder)
-router.delete('/deleteFolder/:id', isAuthorized, publicationController.deleteFolder)
+router.delete('/deleteFolder', isAuthorized, publicationController.deleteFolder)
+router.delete('/deleteBasketItem', isAuthorized, publicationController.deleteItemFromBasket) // <-------------------------------------------- DELETE publication from basket // Удалить комментарии
+
 
 
 module.exports = router
