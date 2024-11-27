@@ -311,8 +311,13 @@ class PublicationController {
     try {
       const {userId} = req.query
       const publications = await Publication.findAll({
-        where: {userId}
-      })
+        where: { userId },
+        include: {
+          model: Publication_tag,
+          attributes: ['creativeTagId'],
+          required: false,
+        }
+      });
       return res.json(publications)
     } catch (e) {
       return res.status(500).json({error: e.message});
@@ -599,13 +604,23 @@ class PublicationController {
         raw: true // Возвращаем данные как plain JSON objects
       });
 
+      const folder = await Folder_of_publication.findByPk(folderId)
+
+
       // Добавляем маркер isPurchased в каждую публикацию
       publications.forEach(pub => {
         pub.isPurchased = !!pub['Publication_buys.userId']; // Преобразуем userId в boolean
         delete pub['Publication_buys.userId']; // Удаляем лишний атрибут из итогового объекта
       });
 
-      res.json(publications)
+      const result = {
+        name: folder.name,
+        description: folder.description,
+        data: publications,
+      }
+
+
+      res.json(result)
     } catch (e) {
       return res.status(500).json({error: e.message});
     }
@@ -737,8 +752,8 @@ class PublicationController {
   }
 
   async editFolder(req, res) {
-    try {
       const {folderOfPublicationId, name, description} = req.body
+    try {
       const updateFolder = await Folder_of_publication.update({name, description}, {where: {id: folderOfPublicationId}})
       return res.json(updateFolder)
     } catch (e) {
@@ -802,6 +817,50 @@ class PublicationController {
       return res.status(500).json({error: e.message});
     }
   }
+
+  async getBasket(req, res) {
+    try {
+      const userId = req.userId
+      const publications = await Basket.findAll({
+        where: {userId},
+        include: [
+          {
+            model: Publication,
+            include: [{model: User, attributes: ['nickname']}]
+          }
+        ]
+      })
+      return res.json(publications)
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
+
+  async deleteItemFromBasket(req, res) {
+    try{
+      const {basketId} = req.body;
+      const basketItem = await Basket.findOne({where: {publicationId: basketId}})
+
+      function erroR(message){
+        res.status(501).json(message)
+      }
+
+      if(!basketId || !basketItem){
+        return erroR({message: 'Not found'})
+      }
+
+      const deleteThis = await Basket.destroy({where: {id: basketItem.id}})
+      if (deleteThis) {
+        return res.status(200).json({id: basketId})
+      }else{
+        return erroR({message: 'something went wrong'})
+      }
+
+    }catch (e) {
+      console.log(e)
+    }
+  }
+
 
   async buyPublication(req, res) {
     try {
@@ -908,24 +967,6 @@ class PublicationController {
     }
   }
 
-  async getBasket(req, res) {
-    try {
-      const userId = req.userId
-      const publications = await Basket.findAll({
-        where: {userId},
-        include: [
-          {
-            model: Publication,
-            attributes: ['title', 'price'],
-            include: [{model: User, attributes: ['nickname']}]
-          }
-        ]
-      })
-      return res.json(publications)
-    } catch (e) {
-      return res.status(500).json({error: e.message})
-    }
-  }
 
   // НАДО ПРОВЕРИТЬ НА ДРУГОМ МАССИВЕ ТЕГОВ, БУДУТ ЛИ ДУБЛИ ПУБЛИКАЦИЙ
   async getSimilarPublications(req, res) {

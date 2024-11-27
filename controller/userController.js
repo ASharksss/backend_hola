@@ -359,35 +359,18 @@ class UserController {
     async getUser(req, res) {
         try {
             const userId = req.query.userId
-            let creative_tags = req.query.creative_tags
+            // let creative_tags = req.query.creative_tags
             let coverUrl, avatarUrl
             let publications
-            if (creative_tags) {
-                creative_tags = creative_tags.split(',')
+                //Получение всех постов пользователя
                 publications = await Publication.findAll({
                     where: {userId},
                     include: [
                         {
                             model: Publication_tag,
-                            where: {
-                                creativeTagId: {
-                                    [Op.in]: creative_tags
-                                },
-                            },
+                            attributes: ['creativeTagId'],
+                            required: false,
                         },
-                        {
-                            model: Publication_buy, //Для проверки доступности публикации
-                            where: {userId}, //Фильтр по текущему пользователя
-                            attributes: ['userId', 'publicationId'],
-                            required: false //Разрешаем LEFT JOIN, чтобы включить все публикации
-                        }
-                    ]
-                })
-            } else {
-                //Получение всех постов пользователя
-                publications = await Publication.findAll({
-                    where: {userId},
-                    include: [
                         {
                             model: Publication_buy, //Для проверки доступности публикации
                             where: {userId}, //Фильтр по текущему пользователя
@@ -396,7 +379,7 @@ class UserController {
                         }
                     ]
                 })
-            }
+            // }
             //Cтавим флаг "Доступно"
             publications = publications.map(publication => {
                 let plainPublication = publication.toJSON(); // Преобразуем в plain object
@@ -406,7 +389,7 @@ class UserController {
             });
 
             const user = await User.findByPk(userId, {
-                attributes: ['nickname', 'count_subscribers', 'aboutMe']
+                attributes: ['nickname', 'count_subscribers', 'aboutMe','id']
             })
             //Получение аватарки
             const avatar = await File.findOne({where: {userId, typeFileId: 3}})
@@ -456,11 +439,11 @@ class UserController {
             if (checkPassword || newPassword) {
                 const hashPassword = await bcrypt.hash(newPassword, 10)
                 await User.update(
-                    { password: hashPassword},
+                    {password: hashPassword},
                     {where: {id: userId}}
                 )
-            }else{
-              return res.status(401).json({message: 'Incorrect old passwords '})
+            } else {
+                return res.status(401).json({message: 'Incorrect old passwords '})
             }
             return res.json({message: 'Password updated'})
         } catch (e) {
@@ -477,6 +460,7 @@ class UserController {
             function isSocialMedia(socialMedia) {
                 return socialMedia && socialMedia.length > 0
             }
+
             async function addSocialMedia(socialID, text, userID) {
                 let [media, created] = await UsersSocialMedia.findOrCreate({
                         where: {
@@ -549,7 +533,7 @@ class UserController {
     }
 
     async getNotificationCount(req, res) {
-    try {
+        try {
             const userId = req.userId
             const count = await Notification.count({where: {userId, read: false}})
             return res.json(count)
