@@ -495,6 +495,15 @@ class UserController {
                 }
             }
 
+            let avatar = await File.findOne({
+                where: {userId: user.id, typeFileId: 3}
+            })
+            //как будто уже и не нужен
+            let profileCover = await File.findOne({
+                where: {userId: user.id, typeFileId: 1}
+            })
+
+            user.avatar = avatar?.url
             user.usersSocialMedia = socialMedia
             delete user.password
             delete user.updatedAt

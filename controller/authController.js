@@ -82,12 +82,6 @@ class AuthController {
       let profileCover = await File.findOne({
         where: {userId: user.id, typeFileId: 1}
       })
-      // if (avatar) {
-      //   user.avatar = `/static/${avatar.name}`
-      // }
-      // if (profileCover) {
-      //   user.profileCover = `/static/${profileCover.name}`
-      // }
 
       // Обновил сборку, потому что прошлая не работала, присылала password && не присылала avatar
       const responseUser = {
