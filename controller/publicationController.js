@@ -639,8 +639,7 @@ class PublicationController {
       publication = await Publication.findOne({
         where: {id}
       })
-      let isAvialable = true
-      // purchase || publication.price === 0
+      let isAvialable = true // purchase || publication.price === 0
       if (isAvialable) {
         publication = await Publication.findOne({
           where: {id},
