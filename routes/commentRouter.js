@@ -8,4 +8,11 @@ router.post('/commentPublication', isAuthorized, commentController.commentPublic
 router.post('/commentLike', isAuthorized, commentController.commentLike)
 router.post('/reportComment', isAuthorized, commentController.reportComment)
 
+router.get('/getComments/:id', isAuthorized, commentController.getComments)
+
+router.delete('/deleteComment', isAuthorized, commentController.deleteComment)
+
+
+
+
 module.exports = router
