@@ -18,6 +18,18 @@ class AuthController {
           nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
         }
       })
+
+      const {accessToken, refreshToken} = await generateTokens(user);
+      const currentDate = new Date()
+      const expiresIn = new Date(new Date().setMonth(currentDate.getMonth() + 1))
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        path: '/',
+        expires: expiresIn,
+        // secure: true,
+        sameSite: true
+      })
+
       // Если захотите сделать отправку почты
       // const mailOptions = {
       //   from: EMAIL_USER,
@@ -34,7 +46,7 @@ class AuthController {
       // });
 
       if (created)
-        return res.json(user)
+        return res.json({token: accessToken, email: user.email, profile: user});
       return res.json(created)
     } catch (e) {
       console.log(e)

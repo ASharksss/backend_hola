@@ -3,7 +3,8 @@ const router = new Router()
 const userController = require('../controller/userController')
 const {isAuthorized} = require("../middleware/authMiddleware");
 
-router.post('/createUserInterests', isAuthorized, userController.createUserInterests)
+router.post('/createUserInterests', isAuthorized, userController.createUserInterests) // <-- USER INTERESTING POST
+
 router.post('/createAuthorTags', isAuthorized, userController.createAuthorTags)
 router.post('/subscribe', isAuthorized, userController.subscribe)
 router.post('/createUsersSocialMedia', isAuthorized, userController.createUsersSocialMedia)
@@ -20,7 +21,9 @@ router.get('/getMySubscriptions', isAuthorized, userController.getMySubscription
 router.get('/getUser', isAuthorized, userController.getUser)
 router.get('/getNotifications', isAuthorized, userController.getNotifications)
 router.get('/getNotificationCount', isAuthorized, userController.getNotificationCount)
-router.get('/getUserInterests', isAuthorized, userController.getUserInterests)
+
+router.get('/getUserInterests', isAuthorized, userController.getUserInterests) // <-- USER INTERESTING GET
+
 router.get('/getAuthorTags', isAuthorized, userController.getAuthorTags)
 router.get('/getRecommendedAuthors', isAuthorized, userController.getRecommendedAuthors)
 router.get('/getReasonForComplaint', isAuthorized, userController.getReasonForComplaint)
