@@ -111,20 +111,43 @@ class UserController {
 
     async createUserInterests(req, res) {
         try {
-            const userId = req.userId
-            const {tags} = req.body
-            tags.map(async tag => {
-                await User_interest.findOrCreate({where: {userId, creativeTagId: tag.id}})
-            })
-            return res.json(tags)
+            const userId = req.userId;
+            const { tags } = req.body;
+
+            // Шаг 1: Получить текущие интересы пользователя
+            const currentInterests = await User_interest.findAll({ where: { userId } });
+
+            // Шаг 2: Найти старые теги, которые не пришли в запросе
+            const currentTagIds = currentInterests.map(interest => interest.creativeTagId);
+            const newTagIds = tags.map(tag => tag.id);
+
+            // Удаляем те теги, которые больше не присутствуют в новом запросе
+            const tagsToDelete = currentTagIds.filter(tagId => !newTagIds.includes(tagId));
+
+            await User_interest.destroy({
+                where: {
+                    userId,
+                    creativeTagId: tagsToDelete
+                }
+            });
+
+            // Шаг 3: Создать новые интересы для тегов, которых еще нет
+            for (const tag of tags) {
+                await User_interest.findOrCreate({
+                    where: { userId, creativeTagId: tag.id }
+                });
+            }
+
+            return res.json(tags); // Отправляем список новых тегов
         } catch (e) {
-            return res.status(500).json({error: e.message});
+            return res.status(500).json({ error: e.message });
         }
     }
 
     async getUserInterests(req, res) {
         try {
             const userId = req.userId
+            console.log(userId)
             //Находим интересы пользователя
             const userInterests = await Group_tag.findAll({
                 include: [
@@ -143,25 +166,23 @@ class UserController {
             })
 
             // Форматирование результатов ВАРИАНТ 1
-            const var1 = userInterests.map(group => ({
-                groupId: group.id,
-                groupName: group.name,
-                tags: group.creative_tags.map(tag => ({
-                    id: tag.id,
-                    name: tag.name
-                }))
-            })).filter(group => group.tags.length > 0);
+            // const var1 = userInterests.map(group => ({
+            //     groupId: group.id,
+            //     groupName: group.name,
+            //     tags: group.creative_tags.map(tag => ({
+            //         id: tag.id,
+            //         name: tag.name
+            //     }))
+            // })).filter(group => group.tags.length > 0);
 
             // Форматирование результатов ВАРИАНТ 2
             const var2 = userInterests.map(group => ({
                 groupId: group.id,
                 tags: group.creative_tags.map(tag => tag.id)
-            }))
-                .filter(group => group.tags.length > 0);
+            })).filter(group => group.tags.length > 0);
 
             //Один из вариантов уйдет после того, как Нафис поэкспериментирует
             return res.json({
-                var1,
                 groupIds: var2.map(group => group.groupId),
                 tags: var2.flatMap(group => ({
                     groupId: group.groupId,
