@@ -6,13 +6,15 @@ const {isAuthorized} = require("../middleware/authMiddleware");
 router.put('/deletePublication', isAuthorized, publicationController.deletePublication)
 router.put('/editPublication/:id', isAuthorized, publicationController.editPublication)
 router.put('/editFolder', isAuthorized, publicationController.editFolder)
-router.post('/createPublication', isAuthorized, publicationController.createPublication)
+router.post('/createPublication', isAuthorized, publicationController.createPublication) // <-- CREATE PUBLICATION | AND | CREATE AUTHOR RECOMMENDATIONS
 router.post('/likePublication', isAuthorized, publicationController.likePublication)
 router.post('/createFolder', isAuthorized, publicationController.createFolder)
 router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)
 router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
 router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket)
+
 router.post('/reportPublication', isAuthorized, publicationController.reportPublication)
+
 router.post('/addToFavorites', isAuthorized, publicationController.addToFavorites)
 router.get('/getUserPublications', isAuthorized, publicationController.getUserPublications)
 router.get('/getPublication/:id', isAuthorized, publicationController.getPublication)

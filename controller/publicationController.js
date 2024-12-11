@@ -651,6 +651,8 @@ class PublicationController {
                 }]
             })
 
+
+
             if (!publication) {
                 return res.status(404).json({success: false, isBought: false, message: 'Publication not found'});
             }else{
@@ -671,7 +673,7 @@ class PublicationController {
             isFavorite = await Favorites.findOne({where: {userId, publicationId: id}})
             publicationJSON.user.isFavorite = Boolean(isFavorite);
 
-            userAvatar = await File.findOne({where: {userId, typeFileId: 3}})
+            userAvatar = await File.findOne({where: {userId: publication.userId, typeFileId: 3}})
             userAvatar ? publicationJSON.user.avatarUrl = `/static/${userAvatar?.name}` : null;
 
             const [view, created] = await Publication_views.findOrCreate({where: {userId, publicationId: id}})

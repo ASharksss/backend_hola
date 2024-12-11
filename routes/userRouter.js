@@ -4,6 +4,7 @@ const userController = require('../controller/userController')
 const {isAuthorized} = require("../middleware/authMiddleware");
 
 router.post('/createUserInterests', isAuthorized, userController.createUserInterests) // <-- USER INTERESTING POST
+router.post('/updateAuthorInterests', isAuthorized, userController.updateAuthorInterests) // <-- AUTHOR INTERESTING POST
 
 router.post('/createAuthorTags', isAuthorized, userController.createAuthorTags)
 router.post('/subscribe', isAuthorized, userController.subscribe)
@@ -23,6 +24,7 @@ router.get('/getNotifications', isAuthorized, userController.getNotifications)
 router.get('/getNotificationCount', isAuthorized, userController.getNotificationCount)
 
 router.get('/getUserInterests', isAuthorized, userController.getUserInterests) // <-- USER INTERESTING GET
+router.get('/getAuthorInterests', isAuthorized, userController.getAuthorInterests) // <-- USER INTERESTING GET
 
 router.get('/getAuthorTags', isAuthorized, userController.getAuthorTags)
 router.get('/getRecommendedAuthors', isAuthorized, userController.getRecommendedAuthors)
