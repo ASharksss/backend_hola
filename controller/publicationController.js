@@ -26,7 +26,7 @@ const {
     Notification, Basket, Publication_views, Transaction, Wallet, Favorites
 } = require("../models/models");
 const {count, findPublicationTags, checkTags} = require('../services/utils')
-const {Op, Sequelize} = require("sequelize");
+const {Op} = require("sequelize");
 
 class PublicationController {
     async createPublication(req, res) {
@@ -318,7 +318,18 @@ class PublicationController {
                     required: false,
                 }
             });
+
+            const currentDate = new Date();
+
+            const filteredAndReversedPublications = publications
+                .filter(publication => {
+                    const dateOfDelete = publication.date_of_delete;
+                    return !dateOfDelete || new Date(dateOfDelete) <= currentDate;
+                })
+                .reverse();
+
             return res.json(publications)
+            // return res.json(filteredAndReversedPublications)
         } catch (e) {
             return res.status(500).json({error: e.message});
         }
@@ -576,7 +587,21 @@ class PublicationController {
                     }
                     break;
             }
-            return res.json(publications.reverse())
+
+            const currentDate = new Date();
+
+            const filteredAndReversedPublications = publications
+                .filter(publication => {
+                    const dateOfDelete = publication.date_of_delete;
+                    return !dateOfDelete || new Date(dateOfDelete) <= currentDate;
+                })
+                .reverse();
+
+            // console.log(filteredAndReversedPublications);
+
+
+            // return res.json(publications.reverse())
+            return res.json(filteredAndReversedPublications)
         } catch (e) {
             console.log(e)
             return res.status(500).json({error: e.message});
