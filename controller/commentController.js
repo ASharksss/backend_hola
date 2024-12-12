@@ -86,7 +86,7 @@ class CommentController {
   async getComments(req, res) {
     try {
       const { id } = req.params
-      // const user = user.user
+      const userId = req.userId
 
       const comments = await Comment.findAll({
         where: { publicationId: id },
@@ -96,17 +96,26 @@ class CommentController {
         ],
       });
 
+      const userLiked = await Comment_likes.findAll({where: {userId: userId}})
+
+      async function getLikesCount(id){
+        const likes = await Comment_likes.findAll({where: {commentId: id}})
+        return likes.length;
+      }
 
       const commentMap = new Map();
-// Создаем карту комментариев по их ID
-      comments.forEach(comment => {
+      // Создаем карту комментариев по их ID
+      for (const comment of comments) {
+        const likeCount = await getLikesCount(comment.id);  // Ожидаем завершения асинхронной функции
         commentMap.set(comment.id, {
           ...comment.dataValues,
           nickname: comment.User, // Accessing nickname from the included User model
           createdAt: moment(comment.createdAt).fromNow(),
+          isLiked: Boolean(userLiked.find(ul => ul.commentId === comment.id)),
+          likeCount,  // Присваиваем значение после выполнения асинхронной функции
           replies: []
         });
-      });
+      }
 
       const result = [];
       // Построение дерева комментариев
