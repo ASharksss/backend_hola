@@ -1,33 +1,33 @@
 const jwt = require('jsonwebtoken')
-
 module.exports.isAuthorized = function (req, res, next) {
   const authHeader = req.header("Authorization")
-  if (!authHeader) {
-    const {refreshToken} = req.cookies
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
+  const {refreshToken} = req.cookies
+
+  if (authHeader) {
+    const [bearer, token] = authHeader.split(" ")
+
+    return jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if(err) {
-        console.log(err)
-        return res.status(403).json({message: 'Ощибка доступа'})
+        return res.status(403).json({message: 'Ошибка доступа'})
       }
       req.userId = user.user.id
       req.user = user.user
-      return next();
+      next()
     })
-    if (!refreshToken) {
-      return res.status(401).json({message: 'Пользователь не авторизован, отсутствует токен'})
-    }
   }
-  const [bearer, token] = authHeader.split(" ")
-  if (bearer !== "Bearer" || !token) {
-    return res.status(401).json({message: 'Пользрватель не авторизован, неправильный формат'})
+
+  if (!refreshToken) {
+    return res.status(401).json({message: 'Пользователь не авторизован, отсутствует токен'})
   }
-  console.log(bearer, token)
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+
+  return jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, user) => {
     if(err) {
-      return res.status(403).json({message: 'Ошибка доступа'})
+      console.log('Refresh Token Error:', err)
+      return res.status(403).json({message: 'Ошибка доступа fresh'})
     }
+    console.log('Decoded Refresh User:', user)
     req.userId = user.user.id
     req.user = user.user
-    return next();
+    next()
   })
 }

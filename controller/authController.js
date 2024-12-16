@@ -1,8 +1,7 @@
-const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt')
 const {Op} = require("sequelize");
-const {User, File, Role, SocialMedia, UsersSocialMedia} = require("../models/models");
-const {refreshToken, generateTokens} = require("../services/utils");
+const {User, File, UsersSocialMedia} = require("../models/models");
+const { generateTokens} = require("../services/utils");
 
 class AuthController {
   async registration(req, res) {
@@ -18,6 +17,7 @@ class AuthController {
           nickname: username, email, sex, password: hashPassword, roleId: 1, date_of_birth
         }
       })
+
 
       const {accessToken, refreshToken} = await generateTokens(user);
       const currentDate = new Date()
@@ -44,6 +44,8 @@ class AuthController {
       //     console.log('Email sent: ' + info.response);
       //   }
       // });
+
+      delete user.password;
 
       if (created)
         return res.json({token: accessToken, email: user.email, profile: user});

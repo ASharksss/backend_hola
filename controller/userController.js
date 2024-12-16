@@ -115,6 +115,9 @@ class UserController {
             const userId = req.userId;
             const { tags } = req.body;
 
+            console.log(userId);
+            console.log(tags);
+
             // Шаг 1: Получить текущие интересы пользователя
             const currentInterests = await User_interest.findAll({ where: { userId } });
 
@@ -221,7 +224,6 @@ class UserController {
                 groupId: group.id,
                 tags: group.creative_tags.map(tag => tag.id)
             })).filter(group => group.tags.length > 0);
-
             //Один из вариантов уйдет после того, как Нафис поэкспериментирует
             return res.json({
                 groupIds: var2.map(group => group.groupId),
@@ -470,6 +472,7 @@ class UserController {
     async getUser(req, res) {
         try {
             const userId = req.query.userId
+            const meId = req.userId;
             // let creative_tags = req.query.creative_tags
             let coverUrl, avatarUrl
             let publications
@@ -502,6 +505,11 @@ class UserController {
             const user = await User.findByPk(userId, {
                 attributes: ['nickname', 'count_subscribers', 'aboutMe','id']
             })
+            const isSubscription = await Subscription.findOne({where: {userId: meId, authorId: userId}})
+            const isSub = Boolean(isSubscription) || false;
+            if (user) {
+                user.setDataValue('isSub', isSub);
+            }
             //Получение аватарки
             const avatar = await File.findOne({where: {userId, typeFileId: 3}})
             if (avatar) {
@@ -591,14 +599,14 @@ class UserController {
                 }
             }
 
-            try {
-                await User.update(
+            // try {
+             await User.update(
                     {nickname, aboutMe, date_of_birth, sex},
                     {where: {id: userId}}
                 )
-            } catch (e) {
-                return res.status(500).json({error: e.message})
-            }
+            // } catch (e) {
+            //     return res.status(500).json({error: e.message})
+            // }
 
             if (isSocialMedia) {
                 for (let item of socialMedia) {
@@ -609,13 +617,13 @@ class UserController {
             let avatar = await File.findOne({
                 where: {userId: user.id, typeFileId: 3}
             })
-            //как будто уже и не нужен
-            let profileCover = await File.findOne({
-                where: {userId: user.id, typeFileId: 1}
-            })
 
             user.avatar = avatar?.url
             user.usersSocialMedia = socialMedia
+            user.nickname = nickname
+            user.aboutMe = aboutMe
+            user.date_of_birth = date_of_birth
+            user.sex = sex
             delete user.password
             delete user.updatedAt
 
@@ -633,7 +641,7 @@ class UserController {
             const notifications = await Notification.findAll({
                 where: {
                     userId,
-                    read: false // Получаем только непрочитанные уведомления
+                    // read: false // Получаем только непрочитанные уведомления
                 }
             });
             // Массив для хранения идентификаторов прочитанных уведомлений
