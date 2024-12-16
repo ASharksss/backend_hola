@@ -2,13 +2,13 @@ const sequelize = require('../db')
 const {DataTypes} = require('sequelize')
 
 
-//Творческие тэги
+//Творческие теги
 const Group_tag = sequelize.define('group_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
 })
 
-//Творческие тэги
+//Творческие теги
 const Creative_tag = sequelize.define('creative_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
@@ -61,7 +61,7 @@ const Status_of_publication = sequelize.define('status_of_publication', {
   name: {type: DataTypes.STRING}
 })
 
-//Возратсные ограничения для публикаций
+//Возрастные ограничения для публикаций
 const Age_limit = sequelize.define('age_limit', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING}

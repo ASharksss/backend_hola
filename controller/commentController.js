@@ -1,8 +1,9 @@
 const moment = require("moment");
 require('moment/locale/ru');
 const {Comment, Comment_likes, Notification, Type_notification, Complaint_about_comment, User, Creative_tag,
-  Publication
+  Publication, File
 } = require("../models/models");
+const {Sequelize} = require("sequelize");
 class CommentController {
   async commentPublication(req, res) {
     try {
@@ -93,6 +94,17 @@ class CommentController {
         attributes: ['id', 'userId', 'createdAt', 'text', 'commentId'],
         include: [
           { model: User, attributes: ['nickname'] },
+          // {
+          //   model: User,
+          //   attributes: ['nickname'],
+          //   include: [
+          //     {
+          //       model: File,
+          //       where: { typeFileId: 3 },
+          //       attributes: ['url']
+          //     }
+          //   ]
+          // }
         ],
       });
 

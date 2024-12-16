@@ -177,7 +177,7 @@ class PublicationController {
             const {
                 title, description, price,
                 ageLimitId, tags,
-                blocks, groupTags, creativeTags,
+                blocks
             } = req.body;
             const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
             const cover = req.files?.cover;
@@ -697,6 +697,9 @@ class PublicationController {
 
             isFavorite = await Favorites.findOne({where: {userId, publicationId: id}})
             publicationJSON.user.isFavorite = Boolean(isFavorite);
+
+            const isSubscription = await Subscription.findOne({where: {userId: userId, authorId: publication.userId}})
+            publicationJSON.user.isSub = Boolean(isSubscription);
 
             userAvatar = await File.findOne({where: {userId: publication.userId, typeFileId: 3}})
             userAvatar ? publicationJSON.user.avatarUrl = `/static/${userAvatar?.name}` : null;

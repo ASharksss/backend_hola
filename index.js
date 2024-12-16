@@ -38,13 +38,14 @@ const start = async () => {
   try {
     await sequelize.authenticate()
     await sequelize.sync().then(result => {
-      console.log(result)
-    }).catch(e => console.log(e))
+      console.log('result')
+    }).catch(e => console.log('e'))
     app.listen(port, () => {
       console.log('Port started')
     })
   } catch (e) {
-    console.log(e)
+    console.log('Ошибка index.js')
+    // console.log('Ошибка index.js', e)
   }
 }
 
