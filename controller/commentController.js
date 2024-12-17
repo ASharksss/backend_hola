@@ -21,6 +21,7 @@ class CommentController {
           attributes: ['id', 'userId', 'createdAt', 'text', 'commentId'],
           include: [
             { model: User, attributes: ['nickname'] },
+            { model: File, where : { userId: user.id, typeFileId: 3} , attributes: ['url']},
           ]
         });
 
