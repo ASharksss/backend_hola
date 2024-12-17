@@ -654,7 +654,7 @@ class UserController {
                 );
             }
             // Возвращаем список всех уведомлений (уже отмеченных как прочитанные)
-            return res.json(notifications);
+            return res.json(notifications.reverse());
         } catch (e) {
             return res.status(500).json({error: e.message})
         }

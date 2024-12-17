@@ -213,18 +213,6 @@ class PublicationController {
                 });
             }
 
-            // Удаление старых файлов и блоков
-            const oldBlocks = await Publication_block.findAll({where: {publicationId}});
-            for (const block of oldBlocks) {
-                if (block.fileId) {
-                    const file = await File.findOne({where: {id: block.fileId}});
-                    const filePath = path.resolve(__dirname, '..', 'static', file.name);
-                    fs.unlinkSync(filePath);
-                    await file.destroy();
-                }
-                await block.destroy();
-            }
-
             // Обновление публикации
             await publication.update({
                 title,
@@ -235,52 +223,52 @@ class PublicationController {
             });
 
             // Удаление старых тегов
-            await Publication_tag.destroy({where: {publicationId: publication.id}});
-
-            // Сохранение новых тегов
-            const parsedTags = JSON.parse(tags);
-            for (const tag of parsedTags) {
-                await Publication_tag.create({creativeTagId: tag, publicationId: publication.id});
-            }
+            // await Publication_tag.destroy({where: {publicationId: publication.id}});
+            //
+            // // Сохранение новых тегов
+            // const parsedTags = JSON.parse(tags);
+            // for (const tag of parsedTags) {
+            //     await Publication_tag.create({creativeTagId: tag, publicationId: publication.id});
+            // }
 
             // Сохранение новых блоков контента
-            const blockArray = JSON.parse(blocks);
-            for (const block of blockArray) {
-                if (block.type === 'file') {
-                    const item = files.find(file => file.name === block.content);
-                    if (item) {
-                        const typeFile = item.name.split('.').pop();
-                        const fileName = `${uuidv4()}.${typeFile}`;
-
-                        await item.mv(path.resolve(__dirname, '..', 'static', fileName));
-
-                        const file = await File.create({
-                            name: fileName,
-                            typeFileId: 2,
-                            userId,
-                            approve: false,
-                            url: `/static/${fileName}`
-                        });
-
-                        await Publication_block.create({
-                            type: block.type,
-                            text: null,
-                            fileId: file.id,
-                            publicationId: publication.id,
-                        });
-
-                    } else {
-                        console.log("Файл не найден для блока:", block.content); // Отладочное сообщение
-                    }
-                } else if (block.type === 'text') {
-                    await Publication_block.create({
-                        type: block.type,
-                        text: block.content,
-                        fileId: null,
-                        publicationId: publication.id,
-                    });
-                }
-            }
+            // const blockArray = JSON.parse(blocks);
+            // for (const block of blockArray) {
+            //     if (block.type === 'file') {
+            //         const item = files.find(file => file.name === block.content);
+            //         if (item) {
+            //             const typeFile = item.name.split('.').pop();
+            //             const fileName = `${uuidv4()}.${typeFile}`;
+            //
+            //             await item.mv(path.resolve(__dirname, '..', 'static', fileName));
+            //
+            //             const file = await File.create({
+            //                 name: fileName,
+            //                 typeFileId: 2,
+            //                 userId,
+            //                 approve: false,
+            //                 url: `/static/${fileName}`
+            //             });
+            //
+            //             await Publication_block.create({
+            //                 type: block.type,
+            //                 text: null,
+            //                 fileId: file.id,
+            //                 publicationId: publication.id,
+            //             });
+            //
+            //         } else {
+            //             console.log("Файл не найден для блока:", block.content); // Отладочное сообщение
+            //         }
+            //     } else if (block.type === 'text') {
+            //         await Publication_block.create({
+            //             type: block.type,
+            //             text: block.content,
+            //             fileId: null,
+            //             publicationId: publication.id,
+            //         });
+            //     }
+            // }
 
             // Получение подписчиков автора
             const subscribers = await Subscription.findAll({where: {authorId: userId}});
