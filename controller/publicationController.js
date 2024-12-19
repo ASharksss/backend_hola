@@ -408,7 +408,16 @@ class PublicationController {
                                 where: {userId},
                                 attributes: ['userId', 'publicationId'],
                                 required: false
-                            }
+                            },
+                            {
+                                model: User, attributes: ['nickname'],
+                                include: {
+                                    model: File,
+                                    where: {typeFileId: 3,},
+                                    required: false
+                                }
+                            },
+
                         ]
                     })
                     publications = publications.map(publication => {
@@ -418,31 +427,50 @@ class PublicationController {
                         return plainPublication;
                     });
                     break;
-                case 'likes':
-                    //Вызов лайкнутых пользователем публикации
-                    publicationsArray = await Publication_likes.findAll({
-                        where: {userId},
-                        attributes: ['publicationId', 'userId'],
-                        include: {
-                            model: Publication,
-                            attributes: ['id', 'title', 'description', 'price', 'date_of_delete', 'createdAt',],
-                            include: [
-                                {model: User, attributes: ['id', 'nickname',]},
-                                {model: Age_limit, attributes: ['name']},
-                                {model: Attachment, include: {model: File}}
-                            ]
-                        },
-                    })
 
-                    //Вызов тэгов, привязанных к публикациям
+                    case 'likes':
+                    //Вызов лайкнутых пользователем публикации
+                    // publicationsArray = await Publication_likes.findAll({
+                    //     where: {userId},
+                    //     attributes: ['publicationId', 'userId'],
+                    //     include: {
+                    //         model: Publication,
+                    //         attributes: ['id', 'title', 'description', 'price', 'date_of_delete', 'createdAt',],
+                    //         include: [
+                    //             {model: User, attributes: ['id', 'nickname',]},
+                    //             {model: Age_limit, attributes: ['name']},
+                    //             {model: Attachment, include: {model: File}}
+                    //         ]
+                    //     },
+                    // })
+                        publicationsArray = await Publication_likes.findAll({
+                            where: {userId},
+                            include: {
+                                model: Publication,
+                                include: [
+                                    {model: User,
+                                        include: {
+                                            model: File,
+                                            where: {typeFileId: 3,},
+                                            required: false
+                                        },
+                                        attributes: ['id', 'nickname',]},
+                                    {model: Age_limit, attributes: ['name']},
+                                    {model: Attachment, include: {model: File}}
+                                ]
+                            },
+                        })
+
+                        //Вызов тэгов, привязанных к публикациям
                     await findPublicationTags(publicationsArray, tags)
                     //Фильтрация по тэгам
                     if (creative_tags) {
                         checkTags(creative_tags, tags, publications, publicationsArray)
                     } else {
-                        publications = publicationsArray
+                        publications = publicationsArray.map(item => item.publication)
                     }
                     break;
+
                 case 'popular':
                     //Получаем инфу о лайках
                     publicationsArray = await Publication_likes.findAll()
@@ -458,7 +486,20 @@ class PublicationController {
                     for (const item of keys) {
                         let candidate = await Publication.findOne({
                             where: {id: item},
-                            include: {model: Attachment, include: {model: File}}
+                            include: [{
+                                model: Attachment,
+                                include: {
+                                    model: File
+                                },
+                            },{
+                                model: User,
+                                include: {
+                                    model: File,
+                                    where: {typeFileId: 3,},
+                                    required: false
+                                },
+                            },
+                            ]
                         })
                         if (creative_tags) {
                             for (let i = 0; i < creative_tags.length; i++) {
@@ -507,7 +548,16 @@ class PublicationController {
                                 })
                                 //Если нашли добавляем пост в общий массив
                                 if (tag) {
-                                    const post = await Publication.findOne({where: {id: tag.publicationId}})
+                                    const post = await Publication.findOne({
+                                        where: {id: tag.publicationId},
+                                        include: {
+                                            model: User, attributes: ['nickname'],
+                                            include: {
+                                                model: File,
+                                                where: {typeFileId: 3,},
+                                                required: false
+                                            }
+                                        }})
                                     if (post) {
                                         publications.push(post)
                                     }
@@ -540,7 +590,8 @@ class PublicationController {
                                 },
                                 {model: Age_limit, attributes: ['id', 'name']},
                                 {model: Status_of_publication, attributes: ['name']},
-                                {model: Attachment, include: {model: File}}
+                                {model: Attachment, include: {model: File}},
+
                             ]
                         }
                     })
@@ -585,10 +636,6 @@ class PublicationController {
                 })
                 .reverse();
 
-            // console.log(filteredAndReversedPublications);
-
-
-            // return res.json(publications.reverse())
             return res.json(filteredAndReversedPublications)
         } catch (e) {
             console.log(e)
