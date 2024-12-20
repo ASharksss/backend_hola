@@ -6,12 +6,14 @@ const {DataTypes} = require('sequelize')
 const Group_tag = sequelize.define('group_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
+  file: {type: DataTypes.STRING},
 })
 
 //Творческие теги
 const Creative_tag = sequelize.define('creative_tag', {
   id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
   name: {type: DataTypes.STRING},
+  file: {type: DataTypes.STRING},
 })
 
 //Роли для пользователей

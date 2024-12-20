@@ -7,6 +7,7 @@ module.exports = {
       {
         id: 1,
         name: "Путешествия по России",
+        file: "/static/Путешествия по России.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 1
@@ -14,6 +15,7 @@ module.exports = {
       {
         id: 2,
         name: "Мировые путешествия",
+        file: "/static/Путешествия по Миру.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 1
@@ -21,13 +23,15 @@ module.exports = {
       {
         id: 3,
         name: "Финансовые рынки",
+        file: "/static/Финансовые рынки.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 2
       },
       {
         id: 4,
-        name: "Личная экономика",
+        name: "Личный Капитал",
+        file: "/static/Личный Капитал.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 2
@@ -35,13 +39,15 @@ module.exports = {
       {
         id: 5,
         name: "Онлайн-курсы",
+        file: "/static/Онлайн-курсы.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 3
       },
       {
         id: 6,
-        name: "Книги для саморазвития",
+        name: "Публикации для саморазвития",
+        file: "/static/Публикации для саморазвития.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 3
@@ -49,6 +55,7 @@ module.exports = {
       {
         id: 7,
         name: "Малый бизнес",
+        file: "/static/Малый бизнес.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 4
@@ -56,6 +63,7 @@ module.exports = {
       {
         id: 8,
         name: "Стартапы",
+        file: "/static/Стартапы.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 4
@@ -63,6 +71,7 @@ module.exports = {
       {
         id: 9,
         name: "Местные новости",
+        file: "/static/Местные новости.jpg",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 5
@@ -70,6 +79,7 @@ module.exports = {
       {
         id: 10,
         name: "Мировые новости",
+        file: "/static/Мировые новости.png",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 5
@@ -77,6 +87,7 @@ module.exports = {
       {
         id: 11,
         name: "Личные блоги",
+        file: "/static/Личные блоги.png",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 6
@@ -84,6 +95,7 @@ module.exports = {
       {
         id: 12,
         name: "Профессиональные блоги",
+        file: "/static/Профессиональные блоги.png",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 6
@@ -91,114 +103,90 @@ module.exports = {
       {
         id: 13,
         name: "Традиционная музыка",
+        file: "/static/Традиционная музыка.png",
         createdAt: new Date(),
         updatedAt: new Date(),
-        groupTagId: 7
-      },
-      {
-        id: 14,
-        name: "Традиционные танцы",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 7
-      },
-      {
-        id: 15,
-        name: "Гармония природы",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 9
-      },
-      {
-        id: 16,
-        name: "Гармония в жизни",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 9
+        groupTagId: 8
       },
       {
         id: 17,
         name: "Современные технологии",
+        file: "/static/Современные технологии.png",
         createdAt: new Date(),
         updatedAt: new Date(),
-        groupTagId: 10
+        groupTagId: 7
       },
       {
         id: 18,
         name: "Технические инновации",
+        file: "/static/Технические инновации.png",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        groupTagId: 7
+      },
+      {
+        id: 19,
+        name: "Классическая музыка",
+        file: "/static/Классическая музыка.png",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        groupTagId: 8
+      },
+      {
+        id: 20,
+        name: "Современная музыка",
+        file: "/static/Современная музыка.png",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        groupTagId: 8
+      },
+      {
+        id: 21,
+        name: "Популярные фильмы",
+        file: "/static/Фильмы.jpg",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        groupTagId: 9
+      },
+      {
+        id: 22,
+        name: "Артхаус",
+        file: "/static/Артхаус.png",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        groupTagId: 9
+      },
+      {
+        id: 23,
+        name: "Классический театр",
+        file: "/static/Классический театр.png",
         createdAt: new Date(),
         updatedAt: new Date(),
         groupTagId: 10
       },
       {
-        id: 19,
-        name: "Классическая музыка",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 11
-      },
-      {
-        id: 20,
-        name: "Современная музыка",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 11
-      },
-      {
-        id: 21,
-        name: "Популярные фильмы",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 12
-      },
-      {
-        id: 22,
-        name: "Артхаус",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 12
-      },
-      {
-        id: 23,
-        name: "Классический театр",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 13
-      },
-      {
         id: 24,
         name: "Современный театр",
+        file: "/static/Современный театр.png",
         createdAt: new Date(),
         updatedAt: new Date(),
-        groupTagId: 13
-      },
-      {
-        id: 25,
-        name: "Новости о звездах",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 14
-      },
-      {
-        id: 26,
-        name: "Скандалы знаменитостей",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        groupTagId: 14
+        groupTagId: 10
       },
       {
         id: 27,
         name: "Мировая политика",
+        file: "/static/Мировая политика.png",
         createdAt: new Date(),
         updatedAt: new Date(),
-        groupTagId: 15
+        groupTagId: 11
       },
       {
         id: 28,
         name: "Локальная политика",
+        file: "/static/Локальная политика.png",
         createdAt: new Date(),
         updatedAt: new Date(),
-        groupTagId: 15
+        groupTagId: 11
       }
 ], {});
   },
