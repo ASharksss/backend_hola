@@ -388,6 +388,7 @@ class UserController {
             }
             //Добавление аватарки
             const avatarTypeFile = avatar.name.split('.').pop()
+            console.log(avatarTypeFile)
             if (avatarTypeFile !== 'jpeg' && avatarTypeFile !== 'png' && avatarTypeFile !== 'jpg') {
                 return res.json('Неподходящее расширение файла для обложки');
             }

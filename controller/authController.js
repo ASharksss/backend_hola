@@ -1,7 +1,10 @@
 const bcrypt = require('bcrypt')
-const {Op} = require("sequelize");
+const {Op, where} = require("sequelize");
 const {User, File, UsersSocialMedia} = require("../models/models");
 const { generateTokens} = require("../services/utils");
+const nodemailer = require('nodemailer');
+const Mailgen = require('mailgen')
+const {PRODUCT_NAME, PRODUCT_VERSION, PRODUCT_URL, HTML_REGISTRATION} = require("../utils");
 
 class AuthController {
   async registration(req, res) {
@@ -155,7 +158,99 @@ class AuthController {
     // }
     next();
   }
+  async resetPassword(req, res, next) {
+    const { email } = req.body
 
+    function randomIntFromInterval(min, max) { // min and max included
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    const code = randomIntFromInterval(1000, 9999);
+
+    let config = {
+      host: process.env.MAIL_SERVER,
+      port: process.env.MAIL_PORT,               // Порт для SSL
+      secure: false,            // Используем SSL
+      auth: {
+        user: process.env.NODEJS_GMAIL_APP_USER,
+        pass: process.env.NODEJS_GMAIL_APP_PASSWORD
+      }
+    }
+    let transporter = nodemailer.createTransport(config);
+    let MailGenerator = new Mailgen({
+      theme: 'default',
+      product: {
+        name: PRODUCT_NAME,
+        link: PRODUCT_URL
+      }
+    });
+
+    function notFound({type}){
+      return res.status(401).json({message: 'Не найдено ' + {type}})
+    }
+
+    if(!email) notFound('email')
+    const user = await User.findOne({where: {email}})
+    if(!user) notFound('user')
+    await User.update({refreshCode: code}, {where: {id: user.id}})
+
+
+    let message = {
+      from: process.env.NODEJS_GMAIL_APP_USER,
+      to: req.body.email,
+      subject: `Сброс пароля на сайте ${PRODUCT_NAME} `,
+      html: HTML_REGISTRATION(code),
+    };
+
+    transporter.sendMail(message).then((info) => {
+      return res.status(201).json(
+          {
+            msg: "Email sent",
+            info: info.messageId,
+            preview: nodemailer.getTestMessageUrl(info)
+          }
+      )
+    }).catch((err) => {
+      return res.status(500).json({ msg: err });
+    })
+
+  }
+
+  async checkME(req, res) {
+    const { email, code } = req.body
+
+    function notFound({type}){
+      return res.status(401).json({message: 'Не найдено ' + {type}})
+    }
+
+    if(!email || !code) notFound('email || code')
+    const user = await User.findOne({where: {email}})
+    if(!user) notFound('user')
+
+    if(user.refreshCode === code){
+      res.status(200).json({success: true})
+    }else{
+      res.status(400).json({success: false})
+    }
+  }
+
+  async setNewPassword(req, res) {
+    const {email, newPassword} = req.body;
+
+    try {
+      const user = await User.findOne({where: {email}})
+      if(!user || !newPassword) res.status(401).json({message: 'not founded'})
+
+      const hashPassword = await bcrypt.hash(newPassword, 10)
+      await User.update(
+          {password: hashPassword, refreshCode: null},
+          {where: {id: user.id}}
+      )
+      return res.status(200).json({message: 'Password updated'})
+    } catch (e) {
+      return res.status(500).json({error: e.message})
+    }
+  }
 }
 
 module.exports = new AuthController()
