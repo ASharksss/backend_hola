@@ -1,6 +1,7 @@
 const sequelize = require('../db')
 const {DataTypes} = require('sequelize')
 
+const { PartnerCard } = require('./PartnerCard');
 
 //Творческие теги
 const Group_tag = sequelize.define('group_tag', {
@@ -423,6 +424,9 @@ Notification.belongsTo(User)
 
 Type_notification.hasMany(Notification)
 Notification.belongsTo(Type_notification)
+
+User.hasMany(PartnerCard)
+PartnerCard.belongsTo(User);
 
 
 module.exports = {
