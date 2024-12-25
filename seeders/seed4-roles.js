@@ -15,7 +15,13 @@ module.exports = {
     "name": "Автор",
     "createdAt": new Date(),
     "updatedAt": new Date()
-  }
+  },
+      {
+        "id": 3,
+        "name": "Автор ИП",
+        "createdAt": new Date(),
+        "updatedAt": new Date()
+      }
 ], {});
   },
 

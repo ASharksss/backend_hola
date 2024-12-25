@@ -227,7 +227,7 @@ class AuthController {
     const user = await User.findOne({where: {email}})
     if(!user) notFound('user')
 
-    if(user.refreshCode === code){
+    if(user.refreshCode.toString() === code.toString()){
       res.status(200).json({success: true})
     }else{
       res.status(400).json({success: false})
@@ -235,18 +235,21 @@ class AuthController {
   }
 
   async setNewPassword(req, res) {
-    const {email, newPassword} = req.body;
+    const {email, newPassword, code} = req.body;
 
     try {
       const user = await User.findOne({where: {email}})
+
       if(!user || !newPassword) res.status(401).json({message: 'not founded'})
+      if(!user.refreshCode) res.status(500).json({success: 'wtf'})
+      if(user.refreshCode.toString() !== code.toString()) res.status(500).json({success: 'wtf'})
 
       const hashPassword = await bcrypt.hash(newPassword, 10)
       await User.update(
           {password: hashPassword, refreshCode: null},
           {where: {id: user.id}}
       )
-      return res.status(200).json({message: 'Password updated'})
+      return res.status(200).json({success: true})
     } catch (e) {
       return res.status(500).json({error: e.message})
     }
