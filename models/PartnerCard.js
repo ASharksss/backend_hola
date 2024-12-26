@@ -1,7 +1,6 @@
 const sequelize = require('../db')
 const {DataTypes} = require('sequelize')
 
-const {User} = require('./models.js');
 const {PartnerCardContact} = require('./PartnerCardContact.js');
 const {PartnerCardAdditional} = require('./PartnerCardAdditional.js');
 const {PartnerCardBank} = require('./PartnerCardBank.js');
@@ -46,7 +45,6 @@ const PartnerCard = sequelize.define('PartnerCard', {
     },
     director: {
         type: DataTypes.STRING,
-        allowNull: false,
     },
 });
 
