@@ -6,6 +6,7 @@ const {isAuthorized} = require("../middleware/authMiddleware");
 
 router.post('/add', isAuthorized, PartnerController.createPartner)
 router.get('/get', isAuthorized, PartnerController.getPartnerData)
+router.put('/update', isAuthorized, PartnerController.updatePartner)
 
 
 

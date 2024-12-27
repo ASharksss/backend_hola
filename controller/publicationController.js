@@ -41,7 +41,7 @@ class PublicationController {
             const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
             const cover = req.files?.cover
             let coverName = null
-            if (role !== 2) {
+            if (role === 1) {
                 const foundGroupTags = await Group_tag.findAll({
                     where: {
                         id: {
