@@ -30,9 +30,10 @@ const {Op} = require("sequelize");
 
 class PublicationController {
     async createPublication(req, res) {
-        try {
             const userId = req.userId;
-            const role = req.user.roleId;
+            const user = req.user;
+            if (!user || !userId) return res.status(400).json({error: "Invalid user"});
+            try {
             const {
                 title, description, price,
                 ageLimitId, tags,
@@ -41,7 +42,8 @@ class PublicationController {
             const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
             const cover = req.files?.cover
             let coverName = null
-            if (role === 1) {
+            // console.log(user)
+            if (user.roleId === 1) {
                 const foundGroupTags = await Group_tag.findAll({
                     where: {
                         id: {

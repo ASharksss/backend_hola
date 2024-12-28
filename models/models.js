@@ -126,7 +126,10 @@ const Transaction = sequelize.define('transaction', {
   purchaseCost: {type: DataTypes.DOUBLE},
   commission: {type: DataTypes.DOUBLE, defaultValue: 1},
   transferToAuthor: {type: DataTypes.DOUBLE},
-  transferToService: {type: DataTypes.DOUBLE}
+  transferToService: {type: DataTypes.DOUBLE},
+
+  status: {type: DataTypes.BOOLEAN, allowNull: false},
+  ivnID: {type: DataTypes.STRING},
 })
 
 const Finance_report = sequelize.define('finance_report', {
@@ -428,6 +431,9 @@ Notification.belongsTo(Type_notification)
 User.hasMany(PartnerCard)
 PartnerCard.belongsTo(User);
 
+// Транзакция
+Transaction.hasMany(Basket)
+Basket.hasMany(Transaction)
 
 module.exports = {
   User,
