@@ -7,6 +7,7 @@ const tagRouter = require('./tagRouter')
 const authRouter = require('./authRouter')
 const searchRouter = require('./searchRouter')
 const partnerRouter = require('./partnerRouter')
+const payRouter = require('./payRouter')
 
 router.use('/user', userRouter)
 router.use('/publication', publicationRouter)
@@ -15,5 +16,6 @@ router.use('/tag', tagRouter)
 router.use('/auth', authRouter)
 router.use('/search', searchRouter)
 router.use('/partner', partnerRouter)
+router.use('/pay', payRouter)
 
 module.exports = router

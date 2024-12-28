@@ -154,25 +154,27 @@ class UserController {
             const user = req.user;
             const { tags } = req.body;
 
-            if(user.roleId !== 2){
-                return res.status(400).json({success: false});
-            }
+            // if(user.roleId !== 2 || user.roleId !== 3){
+            //     return res.status(400).json({success: false});
+            // }
             // Шаг 1: Получить текущие интересы пользователя
             const currentInterests = await Author_tag.findAll({ where: { userId } });
 
-            // Шаг 2: Найти старые теги, которые не пришли в запросе
-            const currentTagIds = currentInterests.map(interest => interest.creativeTagId);
-            const newTagIds = tags.map(tag => tag.id);
+            // if(currentInterests){
+                // Шаг 2: Найти старые теги, которые не пришли в запросе
+                const currentTagIds = currentInterests.map(interest => interest.creativeTagId);
+                const newTagIds = tags.map(tag => tag.id);
 
-            // Удаляем те теги, которые больше не присутствуют в новом запросе
-            const tagsToDelete = currentTagIds.filter(tagId => !newTagIds.includes(tagId));
+                // Удаляем те теги, которые больше не присутствуют в новом запросе
+                const tagsToDelete = currentTagIds.filter(tagId => !newTagIds.includes(tagId));
 
-            await Author_tag.destroy({
-                where: {
-                    userId,
-                    creativeTagId: tagsToDelete
-                }
-            });
+                await Author_tag.destroy({
+                    where: {
+                        userId,
+                        creativeTagId: tagsToDelete
+                    }
+                });
+            // }
 
             // Шаг 3: Создать новые интересы для тегов, которых еще нет
             for (const tag of tags) {
@@ -183,7 +185,8 @@ class UserController {
 
             return res.json(tags); // Отправляем список новых тегов
         } catch (e) {
-            return res.status(500).json({ error: e.message });
+            console.log(e)
+            return res.status(500).json({ error: e });
         }
     }
 
