@@ -127,7 +127,6 @@ const Transaction = sequelize.define('transaction', {
   commission: {type: DataTypes.DOUBLE, defaultValue: 1},
   transferToAuthor: {type: DataTypes.DOUBLE},
   transferToService: {type: DataTypes.DOUBLE},
-
   status: {type: DataTypes.BOOLEAN, allowNull: false},
   ivnID: {type: DataTypes.STRING},
 })
@@ -259,9 +258,6 @@ Report_transaction.belongsTo(Finance_report)
 User.hasMany(Finance_report)
 Finance_report.belongsTo(User)
 
-//Привязка покупки к транзакции
-Publication_buy.hasMany(Transaction)
-Transaction.belongsTo(Publication_buy)
 
 //Привязка кошелька к транзакции
 Wallet.hasMany(Transaction)
@@ -434,6 +430,11 @@ PartnerCard.belongsTo(User);
 // Транзакция
 Transaction.hasMany(Basket)
 Basket.hasMany(Transaction)
+
+//Привязка покупки к транзакции
+Transaction.hasMany(Publication_buy)
+Publication_buy.belongsTo(Transaction)
+
 
 module.exports = {
   User,

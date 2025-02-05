@@ -14,8 +14,6 @@ const {
     Publication_buy,
     User,
     Age_limit,
-    Role,
-    Status_of_publication,
     Comment,
     User_interest,
     Author_tag,
@@ -30,10 +28,10 @@ const {Op} = require("sequelize");
 
 class PublicationController {
     async createPublication(req, res) {
-            const userId = req.userId;
-            const user = req.user;
-            if (!user || !userId) return res.status(400).json({error: "Invalid user"});
-            try {
+        const userId = req.userId;
+        const user = req.user;
+        if (!user || !userId) return res.status(400).json({error: "Invalid user"});
+        try {
             const {
                 title, description, price,
                 ageLimitId, tags,
@@ -338,6 +336,9 @@ class PublicationController {
             let publicationsArray
             let tags = []
             let publicationIds
+
+            let filterCreativeTagIds, include;
+
             switch (group) {
                 case 'main':
                     // Находим все creativeTagIds, которые интересуют пользователя
@@ -349,10 +350,13 @@ class PublicationController {
                     const userCreativeTagIds = userInterests.map(interest => interest.creativeTagId);
 
                     // Преобразование тегов из запроса в числа с проверкой на корректность
-                    let filterCreativeTagIds = userCreativeTagIds;
+                    filterCreativeTagIds = userCreativeTagIds;
 
                     if (creative_tags) {
-                        const queryTags = Array.isArray(creative_tags) ? creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag)) : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
+                        const queryTags = Array.isArray(creative_tags) ?
+                            creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag))
+                            : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
+
                         filterCreativeTagIds = queryTags.length > 0 ? queryTags : userCreativeTagIds;
                     }
 
@@ -376,40 +380,37 @@ class PublicationController {
                                 }
                             },
                             {
-                                model: Publication_buy,
-                                where: {userId}, // Фильтр по текущему пользователю
-                                attributes: ['userId', 'publicationId'],
-                                required: false // Разрешаем LEFT JOIN, чтобы включить все публикации
+                                model: Publication_buy, where: {userId}, attributes: ['userId'],
+                                include: {
+                                    model: Transaction,
+                                    attributes: ['status']
+                                },
+                                required: false  // LEFT JOIN для Publication_buy
                             }
                         ],
-                    });
-
-                    publications = publications.map(publication => {
-                        let plainPublication = publication.toJSON(); // Преобразуем в plain object
-                        // Проверяем наличие покупок
-                        plainPublication.isAvialable = plainPublication.publication_buys.length > 0 || plainPublication.price === 0;
-                        return plainPublication;
                     });
 
                     break;
                 case 'subscriptions':
                     let subscriptions = await Subscription.findAll({where: {userId}})
                     let authorsIds = await subscriptions.map(item => item.authorId)
-                    publications = await Publication.findAll({
-                        where: {
-                            userId: {
-                                [Op.in]: authorsIds
-                            }
-                        },
-                        order: [
-                            ['createdAt', 'DESC']
-                        ],
-                        include: [
+
+                    if (creative_tags) {
+                        const queryTags = Array.isArray(creative_tags) ?
+                            creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag))
+                            : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
+
+                        filterCreativeTagIds = queryTags;
+                    }
+
+                    include = [
                             {
-                                model: Publication_buy,
-                                where: {userId},
-                                attributes: ['userId', 'publicationId'],
-                                required: false
+                                model: Publication_buy, where: {userId}, attributes: ['userId'],
+                                include: {
+                                    model: Transaction,
+                                    attributes: ['status']
+                                },
+                                required: false  // LEFT JOIN для Publication_buy
                             },
                             {
                                 model: User, attributes: ['nickname'],
@@ -421,49 +422,66 @@ class PublicationController {
                             },
 
                         ]
-                    })
-                    publications = publications.map(publication => {
-                        let plainPublication = publication.toJSON(); // Преобразуем в plain object
-                        // Проверяем наличие покупок
-                        plainPublication.isAvialable = plainPublication.publication_buys.length > 0 || plainPublication.price === 0;
-                        return plainPublication;
+
+
+                    if (filterCreativeTagIds) {
+                        include.push(
+                            {
+                                model: Publication_tag,
+                                where: {
+                                    creativeTagId: {
+                                        [Op.in]: filterCreativeTagIds
+                                    }
+                                },
+                                attributes: []
+                            }
+                        );
+                    }
+
+                    // Выполняем запрос с включением или без
+                    publications = await Publication.findAll({
+                        where: {
+                            userId: {
+                                [Op.in]: authorsIds
+                            }
+                        },
+                        order: [
+                            ['createdAt', 'DESC']
+                        ],
+                        include:  include
                     });
+
                     break;
-
-                    case 'likes':
+                case 'likes':
                     //Вызов лайкнутых пользователем публикации
-                    // publicationsArray = await Publication_likes.findAll({
-                    //     where: {userId},
-                    //     attributes: ['publicationId', 'userId'],
-                    //     include: {
-                    //         model: Publication,
-                    //         attributes: ['id', 'title', 'description', 'price', 'date_of_delete', 'createdAt',],
-                    //         include: [
-                    //             {model: User, attributes: ['id', 'nickname',]},
-                    //             {model: Age_limit, attributes: ['name']},
-                    //             {model: Attachment, include: {model: File}}
-                    //         ]
-                    //     },
-                    // })
-                        publicationsArray = await Publication_likes.findAll({
-                            where: {userId},
-                            include: {
-                                model: Publication,
-                                include: [
-                                    {model: User,
-                                        include: {
-                                            model: File,
-                                            where: {typeFileId: 3,},
-                                            required: false
-                                        },
-                                        attributes: ['id', 'nickname',]},
-                                    {model: Age_limit, attributes: ['name']},
-                                    {model: Attachment, include: {model: File}}
-                                ]
-                            },
-                        })
-
-                        //Вызов тэгов, привязанных к публикациям
+                    publicationsArray = await Publication_likes.findAll({
+                        where: {userId},
+                        include: {
+                            model: Publication,
+                            include: [
+                                {
+                                    model: User,
+                                    include: {
+                                        model: File,
+                                        where: {typeFileId: 3,},
+                                        required: false
+                                    },
+                                    attributes: ['id', 'nickname',]
+                                },
+                                {
+                                    model: Publication_buy, where: {userId}, attributes: ['userId'],
+                                    include: {
+                                        model: Transaction,
+                                        attributes: ['status']
+                                    },
+                                    required: false  // LEFT JOIN для Publication_buy
+                                },
+                                {model: Age_limit, attributes: ['name']},
+                                {model: Attachment, include: {model: File}}
+                            ]
+                        },
+                    })
+                    //Вызов тэгов, привязанных к публикациям
                     await findPublicationTags(publicationsArray, tags)
                     //Фильтрация по тэгам
                     if (creative_tags) {
@@ -471,8 +489,8 @@ class PublicationController {
                     } else {
                         publications = publicationsArray.map(item => item.publication)
                     }
-                    break;
 
+                    break;
                 case 'popular':
                     //Получаем инфу о лайках
                     publicationsArray = await Publication_likes.findAll()
@@ -484,25 +502,37 @@ class PublicationController {
                     const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
                     //Достаем ключи
                     const keys = sortedEntries.map(pair => pair[0])
+
                     //Находим по ключам объявления
                     for (const item of keys) {
                         let candidate = await Publication.findOne({
                             where: {id: item},
-                            include: [{
-                                model: Attachment,
-                                include: {
-                                    model: File
+                            include: [
+                                {
+                                    model: Attachment,
+                                    include: {
+                                        model: File
+                                    },
                                 },
-                            },{
-                                model: User,
-                                include: {
-                                    model: File,
-                                    where: {typeFileId: 3,},
-                                    required: false
+                                {
+                                    model: User, attributes: ['id'],
+                                    include: {
+                                        model: File, attributes: ['url'],
+                                        where: {typeFileId: 3,},
+                                        required: false
+                                    },
                                 },
-                            },
+                                {
+                                    model: Publication_buy, where: {userId}, attributes: ['userId'],
+                                    include: {
+                                        model: Transaction,
+                                        attributes: ['status']
+                                    },
+                                    required: false  // LEFT JOIN для Publication_buy
+                                }
                             ]
                         })
+
                         if (creative_tags) {
                             for (let i = 0; i < creative_tags.length; i++) {
                                 let addedTag = await Publication_tag.findAll({
@@ -519,6 +549,7 @@ class PublicationController {
 
                     break;
                 case 'discussed':
+
                     publicationsArray = await Comment.findAll({
                         include: {model: Publication}
                     })
@@ -537,99 +568,109 @@ class PublicationController {
                     // Извлекаем ключи из отсортированного массива
                     const sortedKeys = sortedCountArray.map(item => item[0]);
 
-                    //Если есть тэги
-                    if (creative_tags) {
-                        for (let i = 0; i < creative_tags.length; i++) {//Перебираем массив тэгов
-                            for (const item of sortedKeys) {
-                                //Находим по тэгам объявления
-                                let tag = await Publication_tag.findOne({
-                                    where: {
-                                        publicationId: item,
-                                        creativeTagId: parseInt(creative_tags[i])
-                                    }
-                                })
-                                //Если нашли добавляем пост в общий массив
-                                if (tag) {
-                                    const post = await Publication.findOne({
-                                        where: {id: tag.publicationId},
-                                        include: {
-                                            model: User, attributes: ['nickname'],
-                                            include: {
-                                                model: File,
-                                                where: {typeFileId: 3,},
-                                                required: false
-                                            }
-                                        }})
-                                    if (post) {
-                                        publications.push(post)
-                                    }
-                                }
-                            }
-                        }
-                        //Убираем дубликаты
-                        publications = Array.from(new Set(publications.map(p => p.id)))
-                            .map(id => {
-                                return publications.find(p => p.id === id);
-                            });
-
-                    } else {
-                        for (const item of sortedKeys) {
-                            const candidate = await Publication.findOne({where: {id: item}});
-                            publications.push(candidate);
-                        }
-                    }
-
-                    break;
-                case 'available':
-                    publicationsArray = await Publication_buy.findAll({
-                        where: {userId},
-                        include: {
-                            model: Publication, include: [
+                    for (const item of sortedKeys) {
+                        const post = await Publication.findOne({
+                            where: {id: item},
+                            include: [
                                 {
-                                    model: User,
-                                    attributes: ['id', 'nickname', 'roleId'],
-                                    include: [{model: Role, attributes: ['id', 'name']}]
-                                },
-                                {model: Age_limit, attributes: ['id', 'name']},
-                                {model: Status_of_publication, attributes: ['name']},
-                                {model: Attachment, include: {model: File}},
-
-                            ]
-                        }
-                    })
-                    if (creative_tags) {
-                        for (const item of publicationsArray) {
-                            const publicationTags = await Publication_tag.findAll({
-                                where: {publicationId: item.publication.id},
-                                attributes: ['publicationId', 'creativeTagId'],
-                                include: [
-                                    {model: Creative_tag, attributes: ['name']},
-                                ]
-                            });
-                            tags.push(...publicationTags);
-
-                            for (let i = 0; i < creative_tags.length; i++) { // перебор выбранных тэгов
-                                tags.map(item => { // перебор тэгов найденных по публикациям
-                                    if (item.creativeTagId === parseInt(creative_tags[i])) { // если есть совпадения
-                                        publicationsArray.map(publication => { // добавление в общий массив
-                                            if (publication.publicationId === item.publicationId) {
-                                                publications.push(publication)
-                                            }
-                                        })
+                                    model: User, attributes: ['nickname'],
+                                    include: {
+                                        model: File,
+                                        where: {typeFileId: 3,},
+                                        required: false
                                     }
+                                },
+                                {
+                                    model: Publication_buy, where: {userId}, attributes: ['userId'],
+                                    include: {
+                                        model: Transaction,
+                                        attributes: ['status']
+                                    },
+                                    required: false  // LEFT JOIN для Publication_buy
+                                },
+                            ]
+                        })
+
+                        if (creative_tags) {
+                            for (let i = 0; i < creative_tags.length; i++) {
+                                let addedTag = await Publication_tag.findAll({
+                                    where: {publicationId: item, creativeTagId: creative_tags[i]}
+                                })
+                                addedTag.map(t => {
+                                    publications.push(post)
                                 })
                             }
-
+                        } else {
+                            publications.push(post)
                         }
-                        const uniqueNames = new Set(publications)
-                        publications = Array.from(uniqueNames)
-                    } else {
-                        publications = publicationsArray
                     }
+                    break;
+                case 'available' :
+
+                    if (creative_tags) {
+                        const queryTags = Array.isArray(creative_tags) ?
+                            creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag))
+                            : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
+
+                        filterCreativeTagIds = queryTags;
+                    }
+
+                     include = [
+                        {
+                            model: User,
+                            attributes: ['nickname'],
+                            include: {
+                                model: File,
+                                where: { typeFileId: 3 },
+                                required: false
+                            }
+                        },
+                        {
+                            model: Publication_buy,
+                            where: { userId },
+                            attributes: ['userId'],
+                            include: {
+                                model: Transaction,
+                                where: { status: true },
+                                attributes: ['status']
+                            },
+                            required: false  // LEFT JOIN для Publication_buy
+                        }
+                    ];
+
+                    // Если теги есть, добавляем условие для фильтрации по тегам
+                    if (filterCreativeTagIds) {
+                        include.push(
+                            {
+                            model: Publication_tag,
+                            where: {
+                                creativeTagId: {
+                                    [Op.in]: filterCreativeTagIds
+                                }
+                            },
+                            attributes: []
+                        }
+                        );
+                    }
+
+                    // Выполняем запрос с включением или без
+                    publications = await Publication.findAll({
+                        include: include
+                    });
+
+
                     break;
             }
 
             const currentDate = new Date();
+
+            publications = publications.map(publication => {
+                let plainPublication = publication.toJSON(); // Преобразуем в plain object
+                // Проверяем наличие покупок
+                plainPublication.isAvialable = plainPublication?.publication_buys[0]?.transaction?.status === true || plainPublication.price === 0;
+                return plainPublication;
+            });
+
 
             const filteredAndReversedPublications = publications
                 .filter(publication => {
@@ -637,6 +678,7 @@ class PublicationController {
                     return !dateOfDelete || new Date(dateOfDelete) <= currentDate;
                 })
                 .reverse();
+
 
             return res.json(filteredAndReversedPublications)
         } catch (e) {
@@ -701,7 +743,7 @@ class PublicationController {
                 userAvatar,
                 isLiked,
                 isFavorite,
-                errorMessages= [];
+                errorMessages = [];
 
             publication = await Publication.findOne({
                 where: {id},
@@ -714,19 +756,22 @@ class PublicationController {
             })
 
 
-
             if (!publication) {
                 return res.status(404).json({success: false, isBought: false, message: 'Publication not found'});
-            }else{
+            } else {
                 publicationJSON = publication.toJSON();
             }
 
             purchase = await Publication_buy.findOne({where: {userId, publicationId: id}})
-            // isBought = purchase || publication.price === 0; // потом
-            isBought = true; // test
+            isBought = purchase || publication.price === 0 || publication.userId === userId;  // потом
+            // isBought = true; // test
 
-            if(!isBought){
-                return res.status(200).json({success: true, isBought: false, message: 'Сначала приобретите публикацию'});
+            if (!isBought) {
+                return res.status(200).json({
+                    success: true,
+                    isBought: false,
+                    message: 'Сначала приобретите публикацию'
+                });
             }
 
             isLiked = await Publication_likes.findOne({where: {userId, publicationId: id}})
@@ -942,79 +987,79 @@ class PublicationController {
     }
 
 
-    async buyPublication(req, res) {
-        try {
-            const userId = req.userId;
-            const user = req.user;
-            const {publicationIds} = req.body;
-            let buy
-            let publication
-            let publications = []
-            let authorWalletId
-            let textTemplate = await Type_notification.findOne({where: {id: 7}})
-            //Проверка на publicationIds
-            if (!Array.isArray(publicationIds) || publicationIds.length === 0) {
-                return res.status(400).json({error: 'Не указан массив publicationIds или он пуст'});
-            }
-            const boughtPublications = []; //Купленные
-            const failedPublications = [];// Уже приобретенные
-            for (const publicationId of publicationIds) {
-                const candidate = await Publication_buy.findOne({where: {publicationId, userId}});
-                if (candidate) {
-                    failedPublications.push(publicationId);
-                } else {
-                    buy = await Publication_buy.create({publicationId, userId});
-                    boughtPublications.push(publicationId);
-                    publication = await Publication.findOne({
-                        where: {id: publicationId},
-                        attributes: ['title', 'price'],
-                        include: {model: User, attributes: ['id', 'nickname']}
-                    })
-                    publications.push(publication)
-                    //Находим кошелек автора
-                    authorWalletId = await Wallet.findOne({
-                        where: {userId: publication.user.id},
-                        attributes: ['id', 'balance']
-                    })
-                    //Создаем транзакцию
-                    let transaction = await Transaction.create({
-                        publicationBuyId: buy.id,
-                        purchaseCost: publication.price,
-                        transferToAuthor: publication.price * (1 - 0.01),
-                        transferToService: publication.price * (1 - 0.99),
-                        walletId: authorWalletId.id,
-                        userId
-                    })
-
-                    //Обновляем баланс
-                    let newBalance = authorWalletId.balance + transaction.transferToAuthor
-                    await Wallet.update(
-                        {balance: newBalance},
-                        {where: {id: authorWalletId.id}}
-                    )
-                    //Отправляем уведомление
-                    let notification_text = textTemplate.text
-                        .replace('{nickname}', user.nickname).replace('{title}', publication.title)
-                    await Notification.create({
-                        userId: publication.user.id,
-                        notification_text,
-                        typeNotificationId: 7
-                    })
-                }
-            }
-            //Удаляем из корзины купленные публикации
-            if (boughtPublications.length > 0) {
-                await Basket.destroy({where: {userId, publicationId: boughtPublications}});
-            }
-            return res.json({
-                bought: boughtPublications,
-                alreadyBought: failedPublications,
-                publications
-            })
-        } catch (e) {
-            return res.status(500).json({error: e.message});
-        }
-    }
+    // async buyPublication(req, res) {
+    //     try {
+    //         const userId = req.userId;
+    //         const user = req.user;
+    //         const {publicationIds} = req.body;
+    //         let buy
+    //         let publication
+    //         let publications = []
+    //         let authorWalletId
+    //         let textTemplate = await Type_notification.findOne({where: {id: 7}})
+    //         //Проверка на publicationIds
+    //         if (!Array.isArray(publicationIds) || publicationIds.length === 0) {
+    //             return res.status(400).json({error: 'Не указан массив publicationIds или он пуст'});
+    //         }
+    //         const boughtPublications = []; //Купленные
+    //         const failedPublications = [];// Уже приобретенные
+    //         for (const publicationId of publicationIds) {
+    //             const candidate = await Publication_buy.findOne({where: {publicationId, userId}});
+    //             if (candidate) {
+    //                 failedPublications.push(publicationId);
+    //             } else {
+    //                 buy = await Publication_buy.create({publicationId, userId});
+    //                 boughtPublications.push(publicationId);
+    //                 publication = await Publication.findOne({
+    //                     where: {id: publicationId},
+    //                     attributes: ['title', 'price'],
+    //                     include: {model: User, attributes: ['id', 'nickname']}
+    //                 })
+    //                 publications.push(publication)
+    //                 //Находим кошелек автора
+    //                 authorWalletId = await Wallet.findOne({
+    //                     where: {userId: publication.user.id},
+    //                     attributes: ['id', 'balance']
+    //                 })
+    //                 //Создаем транзакцию
+    //                 let transaction = await Transaction.create({
+    //                     publicationBuyId: buy.id,
+    //                     purchaseCost: publication.price,
+    //                     transferToAuthor: publication.price * (1 - 0.01),
+    //                     transferToService: publication.price * (1 - 0.99),
+    //                     walletId: authorWalletId.id,
+    //                     userId
+    //                 })
+    //
+    //                 //Обновляем баланс
+    //                 let newBalance = authorWalletId.balance + transaction.transferToAuthor
+    //                 await Wallet.update(
+    //                     {balance: newBalance},
+    //                     {where: {id: authorWalletId.id}}
+    //                 )
+    //                 //Отправляем уведомление
+    //                 let notification_text = textTemplate.text
+    //                     .replace('{nickname}', user.nickname).replace('{title}', publication.title)
+    //                 await Notification.create({
+    //                     userId: publication.user.id,
+    //                     notification_text,
+    //                     typeNotificationId: 7
+    //                 })
+    //             }
+    //         }
+    //         //Удаляем из корзины купленные публикации
+    //         if (boughtPublications.length > 0) {
+    //             await Basket.destroy({where: {userId, publicationId: boughtPublications}});
+    //         }
+    //         return res.json({
+    //             bought: boughtPublications,
+    //             alreadyBought: failedPublications,
+    //             publications
+    //         })
+    //     } catch (e) {
+    //         return res.status(500).json({error: e.message});
+    //     }
+    // }
 
     async getUserFolders(req, res) {
         try {
