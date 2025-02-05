@@ -10,7 +10,7 @@ router.post('/createPublication', isAuthorized, publicationController.createPubl
 router.post('/likePublication', isAuthorized, publicationController.likePublication)
 router.post('/createFolder', isAuthorized, publicationController.createFolder)
 router.post('/putPublicationInFolder', isAuthorized, publicationController.putPublicationInFolder)
-router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
+// router.post('/buyPublication', isAuthorized, publicationController.buyPublication)
 router.post('/putPublicationInBasket', isAuthorized, publicationController.putPublicationInBasket)
 
 router.post('/reportPublication', isAuthorized, publicationController.reportPublication)
