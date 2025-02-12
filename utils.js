@@ -1,3 +1,5 @@
+const axios = require('axios')
+
  const PRODUCT_NAME = 'ZABOR'
  const PRODUCT_VERSION = '1.1.0'
  const PRODUCT_URL = 'http://localhost:3000/'
@@ -40,4 +42,41 @@
   </body>
  </html>`
 
- module.exports = { PRODUCT_NAME, PRODUCT_VERSION, PRODUCT_URL, HTML_REGISTRATION}
+ const postData = async (login, sum, invId, receipt, signatureValue, email, test) => {
+  const url = 'https://auth.robokassa.ru/Merchant/Indexjson.aspx?';
+  const data = {
+   MerchantLogin: login,
+   OutSum: sum,
+   EMail: email,
+   invoiceID: invId,
+   Receipt: receipt,
+   SignatureValue: signatureValue,
+   Culture: 'ru',
+   istest: parseInt(test)
+  };
+  try {
+   const response = await axios.post(url, new URLSearchParams(data).toString(), {
+    headers: {
+     'Content-Type': 'application/x-www-form-urlencoded'
+    }
+   });
+
+   console.log(response.data)
+
+   if (response.status !== 200) {
+    console.warn(response.data);
+    throw new Error('Network response was not ok');
+   }
+   return response.data;
+  } catch (error) {
+   console.warn(error);
+   throw error;
+  }
+ }
+
+ const receipt = (name, sum) => ({
+  "items": [{"name": `Услуга разового размещения, Объявление ${name}`, "quantity": 1, "sum": sum, "tax": "none"}]
+ })
+
+
+ module.exports = { PRODUCT_NAME, PRODUCT_VERSION, PRODUCT_URL, HTML_REGISTRATION, postData, receipt}

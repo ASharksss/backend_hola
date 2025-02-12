@@ -3,7 +3,7 @@
     "username": "testNafis",
     "password": "testNafis!",
     "database": "zabor",
-    "host": "192.168.0.108",
+    "host": "192.168.0.109",
     "dialect": "mysql"
   },
   "test": {
