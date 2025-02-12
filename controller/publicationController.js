@@ -951,11 +951,31 @@ class PublicationController {
                 include: [
                     {
                         model: Publication,
-                        include: [{model: User, attributes: ['nickname']}]
+                        include: [
+                            {model: User, attributes: ['nickname']},
+                            {
+                                model: Publication_buy,
+                                where: { userId },
+                                attributes: ['userId'],
+                                include: {
+                                    model: Transaction,
+                                    attributes: ['status']
+                                },
+                                required: false
+                            }
+                        ]
                     }
                 ]
             })
-            return res.json(publications)
+
+            const filter = publications.map(post => {
+                let jsonPost = post.toJSON()
+
+                jsonPost.isAvialable = post.price === 0 || post?.publication?.publication_buys[0]?.transaction?.status === true;
+                return jsonPost
+            })
+
+            return res.json(filter.filter(post => post.isAvialable === false))
         } catch (e) {
             return res.status(500).json({error: e.message})
         }
@@ -1095,6 +1115,8 @@ class PublicationController {
 
     // НАДО ПРОВЕРИТЬ НА ДРУГОМ МАССИВЕ ТЕГОВ, БУДУТ ЛИ ДУБЛИ ПУБЛИКАЦИЙ
     async getSimilarPublications(req, res) {
+
+        const userId = req.userId
         try {
             const publicationId = req.params.id
             //Берем теги текущей публикации
@@ -1119,8 +1141,27 @@ class PublicationController {
                         [Op.in]: similarPublicationIds
                     }
                 },
+                include: [
+                    {
+                        model: Publication_buy, where: {userId}, attributes: ['userId'],
+                        include: {
+                            model: Transaction,
+                            attributes: ['status']
+                        },
+                        required: false  // LEFT JOIN для Publication_buy
+                    },
+                ],
                 attributes: ['id', 'title', 'price', 'views_count', 'coverUrl', 'createdAt', 'date_of_delete',]
             })
+
+            similarPublication = similarPublication.map(publication => {
+                let plainPublication = publication.toJSON(); // Преобразуем в plain object
+                // Проверяем наличие покупок
+                plainPublication.isAvialable = plainPublication.price === 0 || plainPublication?.publication_buys[0]?.transaction?.status === true ;
+                return plainPublication;
+            });
+
+
             return res.json(similarPublication.slice(0, 10))
         } catch (e) {
             return res.status(500).json({error: e.message})
