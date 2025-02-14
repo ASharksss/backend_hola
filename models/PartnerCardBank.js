@@ -1,7 +1,6 @@
 const sequelize = require('../db')
 const {DataTypes} = require('sequelize')
 
-const { PartnerCard } = require('./PartnerCard');
 
     const PartnerCardBank = sequelize.define('PartnerCardBank', {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},

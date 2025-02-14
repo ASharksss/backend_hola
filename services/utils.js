@@ -62,7 +62,7 @@ const refreshToken = async (oldToken) => {
     const decodeToken = jwt.verify(oldToken, process.env.JWT_REFRESH_SECRET)
     const user = await User.findByPk(decodeToken.user.id)
     if (!user) {
-      throw Error('Пользователь не найден')
+      return Error('Пользователь не найден')
     }
     const {accessToken, refreshToken} = await generateTokens(user)
     return {accessToken, refreshToken};

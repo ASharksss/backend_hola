@@ -13,17 +13,13 @@ const {
     Publication_tag,
     Creative_tag,
     Group_tag,
-    Complaint_about_publication,
-    Complaint_about_comment,
     Reason_for_complaint,
-    Type_file
 } = require("../models/models");
 const {v4: uuidv4} = require("uuid");
 const path = require("path");
-const {Op, where} = require("sequelize");
+const {Op,} = require("sequelize");
 const bcrypt = require("bcrypt");
 const fs = require('fs');
-const e = require("express");
 
 // const handlebars = require('handlebars')
 class UserController {
@@ -153,7 +149,6 @@ class UserController {
     async updateAuthorInterests(req, res) {
         try {
             const userId = req.userId;
-            const user = req.user;
             const { tags } = req.body;
 
             // if(user.roleId !== 2 || user.roleId !== 3){
@@ -295,7 +290,7 @@ class UserController {
         try {
             const userId = req.userId
             const {tags} = req.body
-            tags.map(async tag => {
+            tags.map(async () => {
                 await Author_tag.create({creativeTagId: tags.id, userId})
             })
             return res.json(tags)
@@ -733,9 +728,6 @@ class UserController {
     async createContract(req, res) {
         try {
             const {
-                name, surname, patronymic,
-                series, number, insuranceNumber,
-                inn, kpp, ogrn, contractNumber,
                 typeUser
             } = req.body
             let legalContract = fs.readFileSync('static/templates/legalContract.docx', 'utf8');

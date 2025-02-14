@@ -3,7 +3,6 @@ const {PartnerCardBank} = require("../models/PartnerCardBank");
 const {PartnerCardContact} = require("../models/PartnerCardContact");
 const {PartnerCard} = require("../models/PartnerCard");
 const {User} = require("../models/models");
-const {where} = require("sequelize");
 
 class PartnerController {
     async createPartner(req, res) {

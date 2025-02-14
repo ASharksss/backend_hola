@@ -1,13 +1,13 @@
 const axios = require('axios')
 
- const PRODUCT_NAME = 'ZABOR'
- const PRODUCT_VERSION = '1.1.0'
+ const PRODUCT_NAME = 'Dont Stop Me'
+ const PRODUCT_VERSION = '1.0.0'
  const PRODUCT_URL = 'http://localhost:3000/'
 
  const HTML_REGISTRATION = (code) => `
 <!DOCTYPE html>
- <html>
-  <head>
+ <html lang="ru">
+  <head title=`${PRODUCT_NAME}`>
    <style>
        body {
            font-family: Arial, sans-serif;
@@ -65,7 +65,7 @@ const axios = require('axios')
 
    if (response.status !== 200) {
     console.warn(response.data);
-    throw new Error('Network response was not ok');
+    return  new Error('Network response was not ok');
    }
    return response.data;
   } catch (error) {
