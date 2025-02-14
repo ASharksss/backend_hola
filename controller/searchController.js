@@ -1,4 +1,4 @@
-const {Publication, Folder_of_publication, User, Creative_tag, File} = require("../models/models");
+const {Publication, Folder_of_publication, User,  File} = require("../models/models");
 const { Op } = require('sequelize');
 class SearchController {
     async searchByAll(req, res) {

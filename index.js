@@ -6,7 +6,6 @@ const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload')
 const router = require("./routes");
 const sequelize = require("./db");
-const models = require('./models/models')
 const deleteExpiredPublications = require("./services/deleteExpiredPublications");
 const deleteNotifications = require("./services/deleteNotifications");
 const port = process.env.PORT

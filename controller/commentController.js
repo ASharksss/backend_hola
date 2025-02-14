@@ -1,9 +1,8 @@
 const moment = require("moment");
 require('moment/locale/ru');
-const {Comment, Comment_likes, Notification, Type_notification, Complaint_about_comment, User, Creative_tag,
-  Publication, File
+const {Comment, Comment_likes, Notification, Type_notification, Complaint_about_comment, User ,
+   File
 } = require("../models/models");
-const {Sequelize} = require("sequelize");
 class CommentController {
   async commentPublication(req, res) {
     try {
@@ -56,7 +55,6 @@ class CommentController {
       let comment = await Comment.findOne({where: {id: commentId}})
       const like = await Comment_likes.findOne({where: {userId, commentId}})
       let commentLike
-      let commentator
       if (like) {
         await Comment_likes.destroy({where: {commentId, userId}})
       } else {

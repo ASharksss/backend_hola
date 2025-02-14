@@ -1,16 +1,14 @@
 const bcrypt = require('bcrypt')
-const {Op, where} = require("sequelize");
+const {Op} = require("sequelize");
 const {User, File, UsersSocialMedia} = require("../models/models");
 const { generateTokens} = require("../services/utils");
 const nodemailer = require('nodemailer');
-const Mailgen = require('mailgen')
-const {PRODUCT_NAME, PRODUCT_VERSION, PRODUCT_URL, HTML_REGISTRATION} = require("../utils");
+const {PRODUCT_NAME,  HTML_REGISTRATION} = require("../utils");
 
 class AuthController {
   async registration(req, res) {
     try {
       const {username, sex, password, email, date_of_birth} = req.body
-      const errMes = ''
       const hashPassword = await bcrypt.hash(password, 10)
       const [user, created] = await User.findOrCreate({
         where: {
@@ -59,7 +57,7 @@ class AuthController {
     }
   }
 
-  async login(req, res, next) {
+  async login(req, res) {
     try {
       const {email, password} = req.body
       let user = null
@@ -94,10 +92,6 @@ class AuthController {
       })
       let avatar = await File.findOne({
         where: {userId: user.id, typeFileId: 3}
-      })
-      //как будто уже и не нужен
-      let profileCover = await File.findOne({
-        where: {userId: user.id, typeFileId: 1}
       })
 
       // Обновил сборку, потому что прошлая не работала, присылала password && не присылала avatar
@@ -158,7 +152,7 @@ class AuthController {
     // }
     next();
   }
-  async resetPassword(req, res, next) {
+  async resetPassword(req, res) {
     const { email } = req.body
 
     function randomIntFromInterval(min, max) { // min and max included
@@ -177,13 +171,6 @@ class AuthController {
       }
     }
     let transporter = nodemailer.createTransport(config);
-    let MailGenerator = new Mailgen({
-      theme: 'default',
-      product: {
-        name: PRODUCT_NAME,
-        link: PRODUCT_URL
-      }
-    });
 
     function notFound({type}){
       return res.status(401).json({message: 'Не найдено ' + {type}})

@@ -176,10 +176,8 @@ class PublicationController {
             const publicationId = req.params.id; // Предполагаем, что ID публикации передается как параметр маршрута
             const {
                 title, description, price,
-                ageLimitId, tags,
-                blocks
+                ageLimitId,
             } = req.body;
-            const files = req.files?.file ? (Array.isArray(req.files.file) ? req.files.file : [req.files.file]) : [];
             const cover = req.files?.cover;
             let coverName = null;
 
@@ -221,54 +219,6 @@ class PublicationController {
                 ageLimitId,
                 coverUrl: coverName ? `/static/${coverName}` : publication.coverUrl,
             });
-
-            // Удаление старых тегов
-            // await Publication_tag.destroy({where: {publicationId: publication.id}});
-            //
-            // // Сохранение новых тегов
-            // const parsedTags = JSON.parse(tags);
-            // for (const tag of parsedTags) {
-            //     await Publication_tag.create({creativeTagId: tag, publicationId: publication.id});
-            // }
-
-            // Сохранение новых блоков контента
-            // const blockArray = JSON.parse(blocks);
-            // for (const block of blockArray) {
-            //     if (block.type === 'file') {
-            //         const item = files.find(file => file.name === block.content);
-            //         if (item) {
-            //             const typeFile = item.name.split('.').pop();
-            //             const fileName = `${uuidv4()}.${typeFile}`;
-            //
-            //             await item.mv(path.resolve(__dirname, '..', 'static', fileName));
-            //
-            //             const file = await File.create({
-            //                 name: fileName,
-            //                 typeFileId: 2,
-            //                 userId,
-            //                 approve: false,
-            //                 url: `/static/${fileName}`
-            //             });
-            //
-            //             await Publication_block.create({
-            //                 type: block.type,
-            //                 text: null,
-            //                 fileId: file.id,
-            //                 publicationId: publication.id,
-            //             });
-            //
-            //         } else {
-            //             console.log("Файл не найден для блока:", block.content); // Отладочное сообщение
-            //         }
-            //     } else if (block.type === 'text') {
-            //         await Publication_block.create({
-            //             type: block.type,
-            //             text: block.content,
-            //             fileId: null,
-            //             publicationId: publication.id,
-            //         });
-            //     }
-            // }
 
             // Получение подписчиков автора
             const subscribers = await Subscription.findAll({where: {authorId: userId}});
@@ -316,7 +266,7 @@ class PublicationController {
                 })
                 .reverse();
 
-            return res.json(publications)
+            return res.json(filteredAndReversedPublications)
             // return res.json(filteredAndReversedPublications)
         } catch (e) {
             return res.status(500).json({error: e.message});
@@ -393,14 +343,12 @@ class PublicationController {
                     break;
                 case 'subscriptions':
                     let subscriptions = await Subscription.findAll({where: {userId}})
-                    let authorsIds = await subscriptions.map(item => item.authorId)
+                    let authorsIds = subscriptions.map(item => item.authorId)
 
                     if (creative_tags) {
-                        const queryTags = Array.isArray(creative_tags) ?
+                        filterCreativeTagIds = Array.isArray(creative_tags) ?
                             creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag))
                             : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
-
-                        filterCreativeTagIds = queryTags;
                     }
 
                     include = [
@@ -538,7 +486,7 @@ class PublicationController {
                                 let addedTag = await Publication_tag.findAll({
                                     where: {publicationId: item, creativeTagId: creative_tags[i]}
                                 })
-                                addedTag.map(t => {
+                                addedTag.map(() => {
                                     publications.push(candidate)
                                 })
                             }
@@ -596,7 +544,7 @@ class PublicationController {
                                 let addedTag = await Publication_tag.findAll({
                                     where: {publicationId: item, creativeTagId: creative_tags[i]}
                                 })
-                                addedTag.map(t => {
+                                addedTag.map(() => {
                                     publications.push(post)
                                 })
                             }
@@ -608,11 +556,9 @@ class PublicationController {
                 case 'available' :
 
                     if (creative_tags) {
-                        const queryTags = Array.isArray(creative_tags) ?
+                        filterCreativeTagIds = Array.isArray(creative_tags) ?
                             creative_tags.map(tag => parseInt(tag, 10)).filter(tag => !isNaN(tag))
                             : [parseInt(creative_tags, 10)].filter(tag => !isNaN(tag));
-
-                        filterCreativeTagIds = queryTags;
                     }
 
                      include = [

@@ -1,10 +1,8 @@
 const crypto = require('crypto');
 
-const {Transaction, Publication, Publication_buy, User, Type_notification, Wallet} = require("../models/models");
+const {Transaction, Publication, Publication_buy} = require("../models/models");
 const {Basket} = require("../models/models");
 const {PRODUCT_URL, postData, receipt} = require("../utils");
-const {where} = require("sequelize");
-const user = require("nodemailer/lib/smtp-connection");
 
 class TransactionController {
 
@@ -112,7 +110,7 @@ class TransactionController {
         }
     }
 
-    async error(req, res, next) {
+    async error(req, res, ) {
         try {
             const {InvId} = req.query;
             await Transaction.destroy({where: {invId: InvId}})

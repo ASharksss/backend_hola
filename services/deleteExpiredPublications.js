@@ -1,5 +1,5 @@
 const {
-  Publication, Publication_tag, Publication_likes, Attachment, File, Comment, Comment_likes,
+  Publication, Publication_tag, Publication_likes,  File, Comment, Comment_likes,
   Publication_buy, Publication_views, Storage_publication, Publication_block
 } = require('../models/models');
 const { Op } = require('sequelize');
