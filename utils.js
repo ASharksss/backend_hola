@@ -61,7 +61,7 @@ const axios = require('axios')
     }
    });
 
-   console.log(response.data)
+   // console.log(response.data)
 
    if (response.status !== 200) {
     console.warn(response.data);

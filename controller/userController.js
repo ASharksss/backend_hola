@@ -43,7 +43,9 @@ class UserController {
                     userId: authorId,
                     notification_text,
                     typeNotificationId: 5
-                })
+                }).then(
+
+                )
                 // Увеличиваем счетчик подписчиков
                 await User.increment('count_subscribers', {by: 1, where: {id: authorId}});
                 return res.json(candidate)
@@ -648,15 +650,7 @@ class UserController {
                     // read: false // Получаем только непрочитанные уведомления
                 }
             });
-            // Массив для хранения идентификаторов прочитанных уведомлений
-            const notificationIds = notifications.map(notification => notification.id);
-            // Если найдены непрочитанные уведомления, отмечаем их как прочитанные
-            if (notificationIds.length > 0) {
-                await Notification.update(
-                    {read: true}, // Устанавливаем флаг isRead в true
-                    {where: {id: notificationIds}} // Обновляем только уведомления с указанными идентификаторами
-                );
-            }
+
             // Возвращаем список всех уведомлений (уже отмеченных как прочитанные)
             return res.json(notifications.reverse());
         } catch (e) {
