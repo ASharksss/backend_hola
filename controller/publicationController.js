@@ -763,8 +763,8 @@ class PublicationController {
             const author = req.user
             const {publicationId} = req.body
             const today = new Date()
-            const newDateOfDelete = new Date(today);
-            newDateOfDelete.setDate(today.getDate() + 14);
+            const newDateOfDelete = today.setDate(today.getDate() + 14);
+
             const publication = await Publication.findByPk(publicationId)
             if (publication.userId === userId) {
                 await Publication.update({
