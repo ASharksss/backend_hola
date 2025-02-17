@@ -7,7 +7,7 @@ const axios = require('axios')
  const HTML_REGISTRATION = (code) => `
 <!DOCTYPE html>
  <html lang="ru">
-  <head title=`${PRODUCT_NAME}`>
+  <head>
    <style>
        body {
            font-family: Arial, sans-serif;
