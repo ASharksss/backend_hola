@@ -33,22 +33,20 @@ class TransactionController {
                             purchaseCost: totalPrice,
             })
             if(!transaction){
-                return res.status(500).json({error: "Transaction not found", url: `${PRODUCT_URL}/pay/error`})
+                return res.status(500).json({error: "Transaction not found", url: `${PRODUCT_URL}pay/error`})
             } // идет загрузка на клиенте
 
             const updateBasket = await Basket.update(
                 {transactionId: transaction.id},
                 {where: {userId: user.id}}
-            )
+            ) // дрянь
             if(!updateBasket){
-                return res.status(500).json({error: "Basket updating is failed", url: `${PRODUCT_URL}/pay/error`})
+                return res.status(500).json({error: "Basket updating is failed", url: `${PRODUCT_URL}pay/error`})
             } // идет загрузка на клиенте
 
             const robokassaLogin = process.env.ROBOKASSA_LOGIN
             const robokassaIsTest = process.env.ROBOKASSA_IS_TEST || 1
             const robokassaPassword = process.env.ROBOKASSA_PASSWORD_1
-
-            // https://docs.robokassa.ru/testing-mode/ Документация для тестового
 
             const receiptData = receipt('Оплата постов', totalPrice)
             const receiptURLEncode = encodeURIComponent(JSON.stringify(receiptData)).replace(/%3A/g, ":").replace(/%2C/g, ",")
@@ -86,23 +84,18 @@ class TransactionController {
 
             for(let post of basket){
                 const post_buy = await Publication_buy.create({
-                    userId: basket.userId,
+                    userId: post.userId,
                     publicationId: post.publicationId,
-                    transactionId: transaction.id,
+                    transactionId: InvId,
                 })
                 if(!post_buy){console.log('error buy add')}
             }
-
-                                 // if (!booking) return res.json({message: 'oshibka, ne nashel zakaz'});
 
             let crcData = `${OutSum}:${InvId}:${robokassaPassword}`
             const crc = crypto.createHash('md5').update(crcData).digest("hex");
             if (crc !== SignatureValue) return res.json({message: 'Ошибка'})
 
-                            // await Booking.update({isActive: 1}, {where: {id: InvId}})
-                            // await Ad.update({statusAdId: 2}, {where: {id: booking['adId']}})
-
-            return res.redirect(`${PRODUCT_URL}/publications/available`)
+            return res.redirect(`${PRODUCT_URL}publications/available`)
 
         } catch (e) {
             console.log(e.message)
@@ -113,12 +106,11 @@ class TransactionController {
     async error(req, res, ) {
         try {
             const {InvId} = req.query;
-            await Transaction.destroy({where: {invId: InvId}})
+            await Transaction.destroy({where: {id: InvId}})
                 .catch((e) => res.status(500).json({message: `${e}`}));
 
-            return res.redirect(`${PRODUCT_URL}/pay/error`)
+            return res.redirect(`${PRODUCT_URL}pay/error`)
         } catch (e) {
-            // console.log(e.message)
             return res.status(500).json({error: e.message})
         }
     }

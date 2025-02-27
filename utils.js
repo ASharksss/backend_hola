@@ -2,7 +2,8 @@ const axios = require('axios')
 
  const PRODUCT_NAME = 'Dont Stop Me'
  const PRODUCT_VERSION = '1.0.0'
- const PRODUCT_URL = 'http://localhost:3000/'
+ // const PRODUCT_URL = 'http://localhost:3000/'
+ const PRODUCT_URL = 'https://dontstopme.ru/'
 
  const HTML_REGISTRATION = (code) => `
 <!DOCTYPE html>

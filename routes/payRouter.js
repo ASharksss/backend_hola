@@ -8,5 +8,7 @@ const {isAuthorized} = require("../middleware/authMiddleware");
 // router.post('/transaction/temp', isAuthorized, TransactionController.answFromRobo)
 
 router.get('/transaction', isAuthorized, TransactionController.payAd)
+router.get('/success', TransactionController.success)
+router.get('/error', TransactionController.error)
 
 module.exports = router

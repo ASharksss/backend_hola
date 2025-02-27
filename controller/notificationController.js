@@ -4,7 +4,6 @@ class NotificationController {
     async connected(req, res) {
 
         const token = req.query.token;
-        console.log('-------------------------------------------------TOKEN' , token);
 
         res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache');
